@@ -146,8 +146,10 @@ def follow(mapnum, wps, prefix=(), max_tics=3000, K=4, verbose=False, stuck_tics
     tics = list(prefix)
     L = rebuild_limits(tics)
     wi = 0
+    wi_conf = 0
     used = set(); used_at = {}
     door_press = None
+    pending = []          # (tic, line) presses not yet verified against the real replay
     best_prog = (0, 1e9); last_prog_tic = len(tics)
     res = None
     while len(tics) < max_tics:
@@ -167,6 +169,22 @@ def follow(mapnum, wps, prefix=(), max_tics=3000, K=4, verbose=False, stuck_tics
             return tics, res
         if door_press is None:
             door_press = prefix_door_presses(m, tics, res.pos) if (m is not None and tics) else {}
+        if pending and m is not None:
+            keep = []
+            for (pi_, li_) in pending:
+                if pi_ >= len(res.pos):
+                    keep.append((pi_, li_)); continue
+                act = use_hit(m, res.pos[pi_ - 1][0], res.pos[pi_ - 1][1], res.pos[pi_][3], set(uselines)) if pi_ >= 1 else li_
+                if act != li_:
+                    # the press missed in reality: forget it so the door gets faced and pressed again
+                    grp = {lj for lj in uselines if set(m.lsec[lj]) & ({m.lsec[li_][1]} - {-1})} | {li_}
+                    for lj in grp: used.discard(lj)
+                    ds_ = m.lsec[li_][1]
+                    if ds_ in door_press and door_press[ds_][0] == pi_: door_press.pop(ds_)
+                    if act is not None:
+                        used.add(act); used_at[act] = pi_
+                        if m.lines[act][3] in DR_SPECIALS | D1_SPECIALS: door_press[m.lsec[act][1]] = (pi_, m.lines[act][3])
+            pending = keep
         if tics:
             p = res.pos
             if len(p) < len(tics):   # ghost may lag one record
@@ -182,6 +200,7 @@ def follow(mapnum, wps, prefix=(), max_tics=3000, K=4, verbose=False, stuck_tics
                 x, y, a, mx, my = step_model(x, y, a, mx, my, f, s, t)
         else:
             x, y, a, mx, my = START[mapnum]
+        wi = wi_conf
         for k in range(K):
             i = len(tics)
             # advance waypoints
@@ -194,6 +213,8 @@ def follow(mapnum, wps, prefix=(), max_tics=3000, K=4, verbose=False, stuck_tics
                     wi += 1   # next waypoint already visible: cut the corner
                 else:
                     break
+            if k == 0:
+                wi_conf = wi       # advancement checked against the engine's actual position
             if wi >= len(wps):
                 if stop_at_end:
                     break
@@ -218,8 +239,12 @@ def follow(mapnum, wps, prefix=(), max_tics=3000, K=4, verbose=False, stuck_tics
                     v1, v2 = m.lines[li][0], m.lines[li][1]
                     (ax, ay), (bx, by) = m.verts[v1], m.verts[v2]
                     if math.hypot((ax + bx) / 2 - x, (ay + by) / 2 - y) < 90: near_door = True
+            tap = False
             if stuck and fo is None and not near_door:
-                fo = math.degrees(math.atan2(w['y'] - y, w['x'] - x)); fire_now = True
+                if 'aim' in w:
+                    ax_, ay_ = w['aim']; fo = math.degrees(math.atan2(ay_ - y, ax_ - x)); fire_now = True; tap = True
+                else:
+                    fo = math.degrees(math.atan2(w['y'] - y, w['x'] - x)); fire_now = True
             f, s, t = plan_tic(i, x, y, a, mx, my, w['x'], w['y'], L, slow=w.get('slow'), face=fo)
             if 'face' in w and math.hypot(w['x'] - x, w['y'] - y) < w.get('facer', 0):
                 d = wrap(w['face'] - a)
@@ -242,6 +267,7 @@ def follow(mapnum, wps, prefix=(), max_tics=3000, K=4, verbose=False, stuck_tics
                         used.discard(hit)
                 if hit is not None and (hit not in used or hit in repeat_use) and L.can_press(L.use, i, 6) and not (tics and tics[-1][3] & 2):
                     b |= 2; used.add(hit); used_at[hit] = i
+                    pending.append((i, hit))
                     if m.lsec[hit][1] >= 0 and m.lines[hit][3] in DR_SPECIALS | D1_SPECIALS:
                         door_press[m.lsec[hit][1]] = (i, m.lines[hit][3])
                     # all lines of the same door sector count as used (pressing the far side would close it)
@@ -255,7 +281,13 @@ def follow(mapnum, wps, prefix=(), max_tics=3000, K=4, verbose=False, stuck_tics
                         b |= 2
             if w.get('fire') and L.can_press(L.fire, i, 6) and not (tics and tics[-1][3] & 1):
                 b |= 1
-            if fire_now and (tics and tics[-1][3] & 1 or L.can_press(L.fire, i, 6)):
+            if fire_now and tap:
+                lastp = L.fire[-1] if L.fire else -999
+                if i - lastp < 6 and tics and tics[-1][3] & 1:
+                    b |= 1                      # keep holding until the shot goes off
+                elif i - lastp >= 20 and L.can_press(L.fire, i, 6) and not (tics and tics[-1][3] & 1):
+                    b |= 1
+            elif fire_now and (tics and tics[-1][3] & 1 or L.can_press(L.fire, i, 6)):
                 b |= 1
             L.do_turn(i, t)
             if b & 2: L.use.append(i)

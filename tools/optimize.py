@@ -92,10 +92,41 @@ def leg_plan(mapname, a, b, overrides=None, blocked=(), r=40, last_extra=None):
     res = N.path(a, b)
     if res is None: raise RuntimeError(f'no path {a} -> {b}')
     pts, secs = res
-    sm = N.smooth(pts)
-    wps = [dict(x=p[0], y=p[1], r=r) for p in sm[1:]]
-    if last_extra: wps[-1].update(last_extra)
     m = N.m
+    dsecs = {m.lsec[i][1]: i for i, l in enumerate(m.lines) if l[3] in (1, 26, 27, 28, 31, 32, 33, 34, 117, 118) and m.lsec[i][1] >= 0}
+    wps = []
+    seg0 = 0
+    idx = 1
+    while idx < len(pts):
+        if secs[idx] in dsecs and secs[idx - 1] not in dsecs:
+            ds = secs[idx]; prev = secs[idx - 1]
+            # door line on the approach side
+            li = None
+            for j, l in enumerate(m.lines):
+                if l[3] in (1, 26, 27, 28, 31, 32, 33, 34, 117, 118) and m.lsec[j][1] == ds and m.lsec[j][0] == prev:
+                    li = j
+            if li is None: li = dsecs[ds]
+            (ax, ay), (bx, by) = m.verts[m.lines[li][0]], m.verts[m.lines[li][1]]
+            mx, my = (ax + bx) / 2, (ay + by) / 2
+            L = math.hypot(bx - ax, by - ay) or 1
+            nx, ny = (by - ay) / L, -(bx - ax) / L        # right-hand normal = front side
+            px, py = pts[idx - 1]
+            if (px - mx) * nx + (py - my) * ny < 0: nx, ny = -nx, -ny
+            # end of door sector along the path
+            k2 = idx
+            while k2 < len(pts) and secs[k2] == ds: k2 += 1
+            sm = N.smooth(pts[seg0:idx]) if idx - seg0 > 1 else [pts[seg0]]
+            wps += [dict(x=p[0], y=p[1], r=r) for p in sm[1:] if math.hypot(p[0] - mx, p[1] - my) > 56]
+            wps.append(dict(x=mx + nx * 36, y=my + ny * 36, r=14, hard=1))
+            th = math.hypot(pts[min(k2, len(pts) - 1)][0] - mx, pts[min(k2, len(pts) - 1)][1] - my)
+            wps.append(dict(x=mx - nx * max(40, th), y=my - ny * max(40, th), r=24, hard=1))
+            seg0 = min(k2, len(pts) - 1); idx = seg0 + 1
+            continue
+        idx += 1
+    sm = N.smooth(pts[seg0:])
+    wps += [dict(x=p[0], y=p[1], r=r) for p in sm[1:]]
+    if not wps: wps = [dict(x=pts[-1][0], y=pts[-1][1], r=r)]
+    if last_extra: wps[-1].update(last_extra)
     onpath = set(secs)
     doors = set()
     for i, (v1, v2, fl, sp, tg, s1, s2) in enumerate(m.lines):

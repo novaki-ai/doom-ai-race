@@ -1,0 +1,13 @@
+0 21 [(-1504, -3236), (-1504, -3160), (-1548, -3156), (-1652, -3100), (-1812, -3028), (-1867, -2557), (-1921, -2503), (-1876, -2276)] [329, 332, 568, 569, 995, 996]
+1 30 [(-164, -452), (-340, -420), (-404, -420), (-484, -660), (-748, -692), (-1252, -684), (-1684, -804), (-1756, -1388)] [329, 332, 467, 568, 569, 578]
+2 5 [(228, -1604), (540, -1600), (616, -1600), (644, -1604), (700, -1716)] [624, 627, 982]
+leg 0 prefix 0 trial 0: ok False tics 420 exit None pain 8 last [-1884, -2023]
+leg 0 prefix 0 trial 1: ok False tics 219 exit None pain 4 last [-1868, -2841]
+leg 0 prefix 0 trial 2: ok False tics 165 exit None pain 3 last [-1853, -2900]
+leg 0 prefix 0 trial 3: ok False tics 528 exit None pain 9 last [-1784, -1311]
+leg 0 prefix 0 trial 4: ok False tics 248 exit None pain 5 last [-1881, -2772]
+leg 0 prefix 0 trial 5: ok False tics 335 exit None pain 2 last [-1876, -2548]
+leg 0 prefix 0 trial 6: ok False tics 300 exit None pain 5 last [-1872, -2280]
+leg 0 prefix 0 trial 7: ok False tics 420 exit None pain 8 last [-1884, -2023]
+leg 0 failed for all prefixes
+BEST None
