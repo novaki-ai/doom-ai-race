@@ -3,7 +3,7 @@ from wad import Wad
 ROOT=os.path.dirname(os.path.abspath(__file__))
 class Sim:
  def __init__(self,m):
-  self.m=m;self.wad=Wad(m);self.lastattack=-100;self.near=False;self.auto_doors=False;self.door_used={};self.t=[];self.trace=[];self.state={};self.prefix=ROOT+f'/work/sim{os.getpid()}'
+  self.m=m;self.wad=Wad(m);self.lastattack=-100;self.near=False;self.combat_lock=False;self.combat_range=500;self.weapon_policy=False;self.target_id=None;self.smartturn=False;self.turn_sign=0;self.reversals=[];self.lastuse=-100;self.auto_doors=False;self.avoid=False;self.nav=None;self.door_used={};self.t=[];self.trace=[];self.state={};self.prefix=ROOT+f'/work/sim{os.getpid()}'
   for ext in ['in','out']:
    p=self.prefix+'.'+ext
    if os.path.exists(p):os.unlink(p)
@@ -24,6 +24,11 @@ class Sim:
  def step(self,f=0,s=0,a=0,b=0,n=1):
   for _ in range(n):
    if self.state.get('state',0)!=0 or self.state.get('health',100)<=0:break
+   sign=(a>0)-(a<0)
+   if sign and self.turn_sign and sign!=self.turn_sign:self.reversals.append(len(self.t))
+   if sign:self.turn_sign=sign
+   if b&1 and (not self.t or not self.t[-1][3]&1):self.lastattack=len(self.t)
+   if b&2 and (not self.t or not self.t[-1][3]&2):self.lastuse=len(self.t)
    self.inp.write(f'{f} {s} {a} {b}\n');self.t.append((f,s,a,b));self.read()
   return self.state
  def close(self):
@@ -34,17 +39,46 @@ class Sim:
  def replay(self,t):
   for f,s,a,b in t:self.step(f,s,a,b)
  def goto(self,x,y,rad=20,maxn=350,fire=False,use=True,face=None,speed=22,stucklimit=75):
-  start=len(self.t);stuck=0
+  start=len(self.t);stuck=0;teleported=False
   for k in range(maxn):
    st=self.state;px,py=st['x'],st['y'];dx,dy=x-px,y-py;dist=math.hypot(dx,dy)
    if dist<rad or st['state']!=0:break
    if st['health']<=0:break
+   if self.avoid and dist>40:
+    if self.nav is None:
+     from nav import Nav
+     self.nav=Nav(self.wad,8,18)
+    ux,uy=dx/dist,dy/dist
+    ob=[]
+    for o in st['monsters']:
+     if not(o[5]&2) or (o[5]&4 and o[4]<=0):continue
+     ox,oy=o[1]-px,o[2]-py;along=ox*ux+oy*uy;lat=ox*(-uy)+oy*ux
+     rr=46 if o[0] in [12,13,15,18] else (30 if o[0]==30 else 38)
+     if 0<along<130 and abs(lat)<rr+8:ob.append((along,o,rr))
+    if ob:
+     _,o,rr=min(ob,key=lambda v:v[0]);opts=[]
+     for sign in [-1,1]:
+      cx=o[1]+(-uy)*sign*(rr+14);cy=o[2]+ux*sign*(rr+14)
+      gx,gy=map(round,self.nav.grid((cx,cy)))
+      if not(0<=gx<self.nav.nx and 0<=gy<self.nav.ny) or self.nav.pix[gx,gy]:continue
+      fl,ce=st['sectors'][self.nav.sector(cx,cy)]
+      if abs(fl-st['z'])>24 or ce-fl<56:continue
+      opts.append((math.hypot(cx-px,cy-py)+math.hypot(cx-x,cy-y),cx,cy))
+     if opts:
+      _,cx,cy=min(opts);dx,dy=cx-px,cy-py;dist=math.hypot(dx,dy)
    desired=math.atan2(dy,dx)+math.pi/4 if face is None else math.radians(face)
    target=None
    if fire:
-    enemies=[o for o in st['monsters'] if o[5]&4 and o[4]>0 and o[0]!=30 and math.hypot(o[1]-px,o[2]-py)<500 and (self.visible(o) or (self.near and math.hypot(o[1]-px,o[2]-py)<110))]
+    enemies=[o for o in st['monsters'] if o[5]&4 and o[4]>0 and o[0]!=30 and math.hypot(o[1]-px,o[2]-py)<self.combat_range and (self.visible(o) or (self.near and math.hypot(o[1]-px,o[2]-py)<110))]
     if enemies:
-     target=min(enemies,key=lambda o:math.hypot(o[1]-px,o[2]-py)*(0.25 if self.near and ((o[1]-px)*dx+(o[2]-py)*dy)>math.hypot(o[1]-px,o[2]-py)*dist*.75 and math.hypot(o[1]-px,o[2]-py)<120 else 1));desired=math.atan2(target[2]-py,target[1]-px)
+     if self.combat_lock:
+      target=next((o for o in enemies if len(o)>9 and o[9]==self.target_id),None)
+      if target is None:
+       target=min(enemies,key=lambda o:math.hypot(o[1]-px,o[2]-py)*(.5 if o[0]==2 else .75 if o[0]==1 else 1))
+       self.target_id=target[9] if len(target)>9 else None
+     else:
+      target=min(enemies,key=lambda o:math.hypot(o[1]-px,o[2]-py)*(0.25 if self.near and ((o[1]-px)*dx+(o[2]-py)*dy)>math.hypot(o[1]-px,o[2]-py)*dist*.75 and math.hypot(o[1]-px,o[2]-py)<120 else 1))
+     desired=math.atan2(target[2]-py,target[1]-px)
    door=None
    if use and self.auto_doors:
     choices=[]
@@ -63,7 +97,7 @@ class Sim:
     if choices:
      _,desired,door=min(choices);target=None
    turn=round(((desired-st['angle']/2**32*math.tau+math.pi)%math.tau-math.pi)/math.tau*256)
-   turn=max(-46,min(46,turn)) if len(self.t)%7==0 else 0
+   turn=self.limit_turn(turn)
    ang=st['angle']/2**32*math.tau+turn/256*math.tau
    v=min(speed,dist*.3);ax=dx/dist*v-st['vx'];ay=dy/dist*v-st['vy']
    f=max(-50,min(50,round(32*(ax*math.cos(ang)+ay*math.sin(ang)))))
@@ -75,16 +109,27 @@ class Sim:
    usepress=use and len(self.t)%70==0 and not self.auto_doors
    if door is not None and abs((desired-ang+math.pi)%math.tau-math.pi)<.15:
     usepress=True;self.door_used[door]=len(self.t)
-   b=(1 if attack else 0)|(2 if usepress else 0)
-   if fire and st['owned'][2] and st['ammo'][1]>0 and st['weapon']==1:b|=20
+   b=(1 if attack else 0)|(2 if usepress and len(self.t)-self.lastuse>=7 else 0)
+   if self.weapon_policy:
+    chosen=2 if st['owned'][2] and st['ammo'][1]>0 else 3 if st['owned'][3] and st['ammo'][0]>0 else 1
+    if st['weapon']!=chosen:b=(b&~1)|4|(chosen<<3)
+   elif fire and st['owned'][2] and st['ammo'][1]>0 and st['weapon']==1:b|=20
    self.step(f,s,turn,b)
+   if math.hypot(self.state['x']-px,self.state['y']-py)>128:teleported=True;break
    if math.hypot(self.state['x']-px,self.state['y']-py)<.1:stuck+=1
    else:stuck=0
    if stuck>stucklimit:break
   dist=math.hypot(x-self.state['x'],y-self.state['y'])
   print('goto',x,y,'tic',len(self.t),'pos',tuple(round(self.state[v],1) for v in ['x','y']),'dist',round(dist),'hp',self.state['health'],'sector',self.state['sector'],flush=True)
-  return dist<rad or self.state['state']!=0
+  return dist<rad or self.state['state']!=0 or teleported
+ def limit_turn(self,a):
+  a=max(-46,min(46,a))
+  if not self.smartturn:return a if len(self.t)%7==0 else 0
+  sign=(a>0)-(a<0)
+  if sign and self.turn_sign and sign!=self.turn_sign and sum(len(self.t)-t<35 for t in self.reversals)>=6:return 0
+  return a
  def visible(self,o):
+  if len(o)>8:return bool(o[8])
   st=self.state;x,y=st['x'],st['y'];tx,ty=o[1:3]
   for a,b,fl,sp,tag,r,l in self.wad.l:
    ax,ay=self.wad.v[a];bx,by=self.wad.v[b]
@@ -102,7 +147,7 @@ class Sim:
  def face(self,deg,fire=False,use=False,n=10):
   for k in range(n):
    a=round(((math.radians(deg)-self.state['angle']/2**32*math.tau+math.pi)%math.tau-math.pi)/math.tau*256)
-   a=max(-46,min(46,a)) if len(self.t)%7==0 else 0
+   a=self.limit_turn(a)
    ang=self.state['angle']/2**32*math.tau+a/256*math.tau
    ax=-self.state['vx'];ay=-self.state['vy']
    f=max(-50,min(50,round(32*(ax*math.cos(ang)+ay*math.sin(ang)))))

@@ -25,7 +25,7 @@ class Nav:
  def sec(self,p):
   if p not in self.sectorcache:self.sectorcache[p]=self.sector(*self.world(p))
   return self.sectorcache[p]
- def path(self,start,end,sectors=None,allow_lifts=True):
+ def path(self,start,end,sectors=None,allow_lifts=True,forbidden_doors=()):
   if sectors is None:sectors=[s[:2] for s in self.w.sec]
   def nearest(p):
    a,b=map(round,self.grid(p));cand=[(x,y) for x in range(a-4,a+5) for y in range(b-4,b+5) if 0<=x<self.nx and 0<=y<self.ny and not self.pix[x,y]]
@@ -35,7 +35,7 @@ class Nav:
   doors=set()
   lifts=set()
   for a,b,fl,sp,tag,r,l in self.w.l:
-   if l!=65535 and sp in [1,26,27,28,31,32,33,34,117,118]:doors.add(self.w.s[l][-1])
+   if l!=65535 and sp in [1,26,27,28,31,32,33,34,117,118]:doors.add(self.w.s[l][-1]) if self.w.s[l][-1] not in forbidden_doors else None
    if tag and sp in [62,88,10,21,53,87]:lifts|={i for i,s in enumerate(self.w.sec) if s[-1]==tag}
   def height(p):
    sec=self.sec(p);f,c=sectors[sec];return (f,c,sec)

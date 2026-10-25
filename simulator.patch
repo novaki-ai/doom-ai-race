@@ -149,10 +149,10 @@ index f63f74a..3781883 100644
 +target_include_directories(dsda_dependencies INTERFACE /race/astra/deps/root/usr/include /race/astra/deps/root/usr/include/SDL2)
 +target_link_libraries(dsda_dependencies INTERFACE /usr/lib/x86_64-linux-gnu/libGL.so.1 /race/astra/deps/root/usr/lib/x86_64-linux-gnu/libGLU.so.1 /usr/lib/x86_64-linux-gnu/libsndfile.so.1 /usr/lib/x86_64-linux-gnu/libzip.so.5 /usr/lib/x86_64-linux-gnu/libz.so.1 /usr/lib/x86_64-linux-gnu/libSDL2-2.0.so.0 /opt/dsda-doom/usr/lib/x86_64-linux-gnu/libSDL2_mixer-2.0.so.0)
 diff --git a/prboom2/src/g_game.c b/prboom2/src/g_game.c
-index 1eb7613..a780d71 100644
+index 1eb7613..741d12d 100644
 --- a/prboom2/src/g_game.c
 +++ b/prboom2/src/g_game.c
-@@ -116,6 +116,30 @@
+@@ -116,6 +116,38 @@
  #include "dsda/split_tracker.h"
  #include "dsda/utility.h"
  
@@ -162,6 +162,7 @@ index 1eb7613..a780d71 100644
 + static FILE *in = NULL, *out = NULL;
 + player_t *p = &players[0]; mobj_t *m = p->mo; thinker_t *th;
 + int i, first = 1, f, side, a, b;
++ mobj_t *old_line_target=linetarget;
 + if (!in) { out=fopen(getenv("RACE_OUT"),"w"); in=fopen(getenv("RACE_IN"),"r"); }
 + fprintf(out,"{\"tic\":%d,\"map\":%d,\"state\":%d,\"x\":%.6f,\"y\":%.6f,\"z\":%.6f,\"angle\":%u,\"vx\":%.6f,\"vy\":%.6f,\"health\":%d,\"armor\":%d,\"weapon\":%d,\"kills\":%d,\"sector\":%ld,\"ammo\":[",leveltime,gamemap,gamestate,m->x/65536.,m->y/65536.,m->z/65536.,m->angle,m->momx/65536.,m->momy/65536.,p->health,p->armorpoints[0],p->readyweapon,p->killcount,(long)(m->subsector->sector-sectors));
 + for(i=0;i<4;i++)fprintf(out,"%s%d",i?",":"",p->ammo[i]);
@@ -172,9 +173,16 @@ index 1eb7613..a780d71 100644
 + for(th=thinkercap.next;th!=&thinkercap;th=th->next) if(th->function==P_MobjThinker) {
 +  mobj_t *o=(mobj_t*)th;
 +  if(o!=m && (o->flags & (MF_SHOOTABLE|MF_MISSILE|MF_SPECIAL))) {
-+   fprintf(out,"%s[%d,%.4f,%.4f,%.4f,%d,%lu,%u]",first?"":",",o->type,o->x/65536.,o->y/65536.,o->z/65536.,o->health,(unsigned long)o->flags,o->angle);first=0;
++   int visible=0, hittable=0;
++   if((o->flags & MF_SHOOTABLE) && abs(o->x-m->x)<800*FRACUNIT && abs(o->y-m->y)<800*FRACUNIT) {
++    visible=P_CheckSight(m,o);
++    P_AimLineAttack(m,R_PointToAngle2(m->x,m->y,o->x,o->y),2048*FRACUNIT,0);
++    hittable=linetarget==o;
++   }
++   fprintf(out,"%s[%d,%.4f,%.4f,%.4f,%d,%lu,%u,%d,%d,%llu]",first?"":",",o->type,o->x/65536.,o->y/65536.,o->z/65536.,o->health,(unsigned long)o->flags,o->angle,visible,hittable,(unsigned long long)(unsigned long)o);first=0;
 +  }
 + }
++ linetarget=old_line_target;
 + fprintf(out,"]}\n");fflush(out);
 + if(fscanf(in,"%d %d %d %d",&f,&side,&a,&b)!=4) exit(0);
 + memset(cmd,0,sizeof(*cmd));cmd->forwardmove=f;cmd->sidemove=side;cmd->angleturn=a*256;cmd->buttons=b;
@@ -183,7 +191,7 @@ index 1eb7613..a780d71 100644
  // Allows use of HELP2 screen for PWADs under DOOM 1
  int pwad_help2_check;
  
-@@ -1590,8 +1614,10 @@ void G_Ticker (void)
+@@ -1590,8 +1622,10 @@ void G_Ticker (void)
          if (dsda_PendingJoin())
            dsda_JoinDemoCmd(cmd);
  
