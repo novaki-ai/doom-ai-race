@@ -45,12 +45,21 @@ E1M8 has no exit line. The level ends in a teleporter-only room whose floor is s
 health is 10 or less. The teleporter is beyond walls (tag 666) that lower only when both Barons (1000 HP each) are
 dead. After that, a stair (build-8 at 0.25 units/tic) must rise for about 11 s. I found no shortcut in the map data.
 
-## Maps
+## Maps (times are check.py results)
+- E1M1 10.09 s (me), E1M2 30.80 s (helper), E1M4 13.43 s (helper). Other maps: see below.
 - E1M1: start -> north corridor -> door -> north room -> zigzag room -> two doors south -> exit switch.
   7-leg beam search with corner cutting: 14.37 s first, then 12.37, 11.91 and 10.09 s.
 - E1M7 (not submitted): needs the yellow key (east lift, an imp in a 64-unit corridor, 3 shotgun guys at the key),
   then the west lift for the red key, then the red door for the blue key, then the yellow and blue doors: about
   21,600 units in total. My follower always died at the yellow key, even after picking up the green armour first.
+
+- E1M3 (me, then helper): the normal exit needs the blue key (far west), the way back through a corridor of
+  about 15 monsters, then a build-stairs trigger (line 967) whose last step needs about 256 tics to rise, in a room
+  with about 20 monsters. My 28-leg beam search reached the trigger at tic ~1315 but always died while waiting.
+  The helper then tried the secret exit (line 785, also an exit for check.py) via lift 165 -> switch 360 -> pit 66
+  -> corridor 51 -> room 32 -> ring 31 -> room 35.
+- E1M5 (helper): blue key behind switch 189 in the west pit (needs the yellow key first); the yellow-key leg
+  (raised nukage sector 91, spectres) was the blocker.
 
 ## With more time
 - Make the follower monster-aware (read monster positions, for example from savegame-format key frames) to dodge,
