@@ -55,6 +55,8 @@ class Demo:
 
 def read_ghost(path):
     data = Path(path).read_bytes()
+    if len(data) < 8:
+        return []
     version, count = struct.unpack_from("<ii", data)
     if version != 2 or count != 1:
         raise ValueError((version, count))
@@ -118,7 +120,9 @@ class Router:
         self.demo = Demo(mapnum)
         self.work = ROOT / work / f"E1M{mapnum}"
         self.work.mkdir(parents=True, exist_ok=True)
-        self.last = None
+        start = next(t for t in Wad().map(mapnum).things if t["type"] == 1)
+        self.last = dict(x=float(start["x"]), y=float(start["y"]), z=0.0,
+                         angle=float(start["angle"]), raw_angle=start["angle"] * (1 << 32) // 360)
         self.trace = []
         self.log = []
 
@@ -131,7 +135,8 @@ class Router:
         path = self.save()
         result = replay(path)
         self.trace = result["frames"]
-        self.last = self.trace[-1] if self.trace else None
+        if self.trace:
+            self.last = self.trace[-1]
         return result
 
     def turn(self, target):
@@ -139,21 +144,30 @@ class Router:
             self.run()
         if isinstance(target, (tuple, list)):
             target = angle_to((self.last["x"], self.last["y"]), target)
-        tics = turn_tics(self.last, target)
-        self.demo.extend(tics)
-        if tics:
+        count = 0
+        for _ in range(16):
+            tics = turn_tics(self.last, target)
+            if not tics:
+                break
+            self.demo.extend(tics)
+            count += len(tics)
+            self.demo.tics.append((0, 0, 0, 0))
             self.run()
-        self.log.append(f"turn {target:.2f}: {len(tics)} tics, end {self.pos()}")
+            self.demo.tics.pop()
+        else:
+            raise RuntimeError(f"Turn did not reach {target}: {self.last['angle']}")
+        self.log.append(f"turn {target:.2f}: {count} tics, end {self.pos()}")
         return self
 
     def pos(self):
         return None if self.last is None else (round(self.last["x"], 2), round(self.last["y"], 2))
 
-    def go(self, target, maxtics=300, threshold=24, forward=50, side=0, buttons=0, name="go"):
+    def go(self, target, maxtics=300, threshold=24, forward=50, side=0, buttons=0, name="go", settle=10):
         if self.last is None:
             self.run()
         start_len = len(self.demo.tics)
-        self.turn(target)
+        move_angle = angle_to((self.last["x"], self.last["y"]), target) + math.degrees(math.atan2(side, forward))
+        self.turn(move_angle)
         move_start = len(self.demo.tics)
         self.demo.extend([(forward, side, 0, buttons)] * maxtics)
         result = self.run()
@@ -168,11 +182,70 @@ class Router:
         best_d, best_i = min(candidates)
         keep = best_i + 1 - move_start
         self.demo.tics = self.demo.tics[:move_start] + self.demo.tics[move_start:move_start + keep]
+        self.demo.extend([(0, 0, 0, 0)] * settle)
         self.run()
         self.log.append(f"{name} -> {target}: {keep} tics, miss {best_d:.1f}, end {self.pos()}, total {len(self.demo.tics)}")
         print(self.log[-1], flush=True)
         (self.work / "route.log").write_text("\n".join(self.log) + "\n")
         return best_d <= threshold
+
+    def legal_turn(self, step):
+        if not step:
+            return 0
+        sign = 1 if step > 0 else -1
+        last = 0
+        reversals = []
+        for i, (_, _, a, _) in enumerate(self.demo.tics):
+            direction = (a > 0) - (a < 0)
+            if direction and last and direction != last:
+                reversals.append(i)
+            if direction:
+                last = direction
+        now = len(self.demo.tics)
+        if last and sign != last and sum(now - r < 35 for r in reversals) >= 6:
+            return 0
+        return step
+
+    def servo(self, target, maxtics=300, threshold=2, **_):
+        self.turn(angle_to((self.last["x"], self.last["y"]), target))
+        facing = math.radians(self.last["angle"])
+        forward_unit = (math.cos(facing), math.sin(facing))
+        side_unit = (math.sin(facing), -math.cos(facing))
+        if len(self.trace) >= 2:
+            velocity = [self.trace[-1]["x"] - self.trace[-2]["x"], self.trace[-1]["y"] - self.trace[-2]["y"]]
+        else:
+            velocity = [0.0, 0.0]
+        stalled = 0
+        start_len = len(self.demo.tics)
+        for n in range(maxtics):
+            old = self.last
+            dx, dy = target[0] - old["x"], target[1] - old["y"]
+            distance = math.hypot(dx, dy)
+            speed = math.hypot(*velocity)
+            if distance < threshold and speed < 1.8:
+                break
+            desired_speed = min(14.0, distance * 0.3)
+            desired = [dx / distance * desired_speed, dy / distance * desired_speed] if distance else [0.0, 0.0]
+            correction = [desired[0] - velocity[0], desired[1] - velocity[1]]
+            forward = max(-50, min(50, round(32 * (correction[0] * forward_unit[0] + correction[1] * forward_unit[1]))))
+            side = max(-50, min(50, round(32 * (correction[0] * side_unit[0] + correction[1] * side_unit[1]))))
+            attack = 1 if stalled >= 4 else 0
+            self.demo.tics.append((forward, side, 0, attack))
+            self.demo.tics.append((0, 0, 0, attack))
+            self.run()
+            self.demo.tics.pop()
+            velocity = [self.last["x"] - old["x"], self.last["y"] - old["y"]]
+            if math.hypot(*velocity) < 0.05 and distance >= threshold:
+                stalled += 1
+            else:
+                stalled = 0
+            if stalled >= 120:
+                raise RuntimeError(f"Servo stuck at {self.pos()} -> {target}")
+        else:
+            raise RuntimeError(f"Servo timed out at {self.pos()} -> {target}")
+        self.log.append(f"servo -> {target}: {len(self.demo.tics) - start_len} tics, end {self.pos()}, total {len(self.demo.tics)}")
+        print(self.log[-1], flush=True)
+        return True
 
     def wait(self, n, buttons=0):
         self.demo.extend([(0, 0, 0, buttons)] * n)
@@ -183,10 +256,10 @@ class Router:
     def use(self, target=None, wait=18):
         if target is not None:
             self.turn(target)
-        self.demo.extend([(0, 0, 0, 2), (0, 0, 0, 0)])
-        if wait:
-            self.demo.extend([(0, 0, 0, 0)] * wait)
+        self.demo.extend([(50, 0, 0, 2)] + [(50, 0, 0, 0)] * (wait + 1))
+        self.demo.tics.append((0, 0, 0, 0))
         self.run()
+        self.demo.tics.pop()
         self.log.append(f"use {target}: end {self.pos()}, total {len(self.demo.tics)}")
         print(self.log[-1], flush=True)
         return self
