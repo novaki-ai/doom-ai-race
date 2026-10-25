@@ -4,7 +4,7 @@ os.sched_setaffinity(0,{4,5,6,7})
 ROOT=os.path.dirname(os.path.abspath(__file__))
 class Sim:
  def __init__(self,m):
-  self.m=m;self.wad=Wad(m);self.lastattack=-100;self.near=False;self.combat_lock=False;self.hitscan_priority=False;self.combat_range=500;self.weapon_policy=False;self.target_id=None;self.smartturn=False;self.turn_sign=0;self.reversals=[];self.lastuse=-100;self.auto_doors=False;self.avoid=False;self.nav=None;self.door_used={};self.t=[];self.trace=[];self.state={};self.prefix=ROOT+f'/work/sim{os.getpid()}'
+  self.m=m;self.wad=Wad(m);self.lastattack=-100;self.near=False;self.combat_lock=False;self.hitscan_priority=False;self.combat_range=500;self.weapon_policy=False;self.target_id=None;self.smartturn=False;self.turn_sign=0;self.reversals=[];self.lastuse=-100;self.auto_doors=False;self.auto_dist=66;self.avoid=False;self.nav=None;self.door_used={};self.t=[];self.trace=[];self.state={};self.prefix=ROOT+f'/work/sim{os.getpid()}'
   for ext in ['in','out']:
    p=self.prefix+'.'+ext
    if os.path.exists(p):os.unlink(p)
@@ -39,7 +39,7 @@ class Sim:
  def draw(self):self.wad.draw(f'work/trace{self.m}.png',self.trace,False)
  def replay(self,t):
   for f,s,a,b in t:self.step(f,s,a,b)
- def goto(self,x,y,rad=20,maxn=350,fire=False,use=True,face=None,speed=22,stucklimit=75,shoot_at=None):
+ def goto(self,x,y,rad=20,maxn=350,fire=False,use=True,face=None,speed=22,stucklimit=75,shoot_at=None,brake=.3):
   start=len(self.t);stuck=0;teleported=False
   for k in range(maxn):
    st=self.state;px,py=st['x'],st['y'];dx,dy=x-px,y-py;dist=math.hypot(dx,dy)
@@ -90,7 +90,7 @@ class Sim:
      ax0,ay0=self.wad.v[a];bx0,by0=self.wad.v[b];ex,ey=bx0-ax0,by0-ay0
      u=max(0,min(1,((px-ax0)*ex+(py-ay0)*ey)/(ex*ex+ey*ey)));qx,qy=ax0+u*ex,ay0+u*ey
      dd=math.hypot(qx-px,qy-py)
-     if dd>66:continue
+     if dd>self.auto_dist:continue
      if (x-px)*(qx-px)+(y-py)*(qy-py)<0:continue
      sec=self.wad.s[ls][-1] if ls!=65535 else -1
      if sp!=62 and st['sectors'][sec][1]-st['sectors'][sec][0]>=56:continue
@@ -102,7 +102,7 @@ class Sim:
    turn=round(((desired-st['angle']/2**32*math.tau+math.pi)%math.tau-math.pi)/math.tau*256)
    turn=self.limit_turn(turn)
    ang=st['angle']/2**32*math.tau+turn/256*math.tau
-   v=min(speed,dist*.3);ax=dx/dist*v-st['vx'];ay=dy/dist*v-st['vy']
+   v=min(speed,dist*brake);ax=dx/dist*v-st['vx'];ay=dy/dist*v-st['vy']
    f=max(-50,min(50,round(32*(ax*math.cos(ang)+ay*math.sin(ang)))))
    s=max(-50,min(50,round(32*(ax*math.sin(ang)-ay*math.cos(ang)))))
    attack=target is not None and abs((desired-ang+math.pi)%math.tau-math.pi)<.15
