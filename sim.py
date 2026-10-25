@@ -1,5 +1,6 @@
 import os,subprocess,struct,json,math
 from wad import Wad
+os.sched_setaffinity(0,{4,5,6,7})
 ROOT=os.path.dirname(os.path.abspath(__file__))
 class Sim:
  def __init__(self,m):
@@ -38,7 +39,7 @@ class Sim:
  def draw(self):self.wad.draw(f'work/trace{self.m}.png',self.trace,False)
  def replay(self,t):
   for f,s,a,b in t:self.step(f,s,a,b)
- def goto(self,x,y,rad=20,maxn=350,fire=False,use=True,face=None,speed=22,stucklimit=75):
+ def goto(self,x,y,rad=20,maxn=350,fire=False,use=True,face=None,speed=22,stucklimit=75,shoot_at=None):
   start=len(self.t);stuck=0;teleported=False
   for k in range(maxn):
    st=self.state;px,py=st['x'],st['y'];dx,dy=x-px,y-py;dist=math.hypot(dx,dy)
@@ -79,6 +80,8 @@ class Sim:
      else:
       target=min(enemies,key=lambda o:math.hypot(o[1]-px,o[2]-py)*(0.25 if self.near and ((o[1]-px)*dx+(o[2]-py)*dy)>math.hypot(o[1]-px,o[2]-py)*dist*.75 and math.hypot(o[1]-px,o[2]-py)<120 else 1))
      desired=math.atan2(target[2]-py,target[1]-px)
+   if shoot_at is not None:
+    desired=math.atan2(shoot_at[1]-py,shoot_at[0]-px);target=True
    door=None
    if use and self.auto_doors:
     choices=[]
