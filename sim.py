@@ -4,7 +4,7 @@ os.sched_setaffinity(0,{4,5,6,7})
 ROOT=os.path.dirname(os.path.abspath(__file__))
 class Sim:
  def __init__(self,m):
-  self.m=m;self.wad=Wad(m);self.lastattack=-100;self.near=False;self.combat_lock=False;self.combat_range=500;self.weapon_policy=False;self.target_id=None;self.smartturn=False;self.turn_sign=0;self.reversals=[];self.lastuse=-100;self.auto_doors=False;self.avoid=False;self.nav=None;self.door_used={};self.t=[];self.trace=[];self.state={};self.prefix=ROOT+f'/work/sim{os.getpid()}'
+  self.m=m;self.wad=Wad(m);self.lastattack=-100;self.near=False;self.combat_lock=False;self.hitscan_priority=False;self.combat_range=500;self.weapon_policy=False;self.target_id=None;self.smartturn=False;self.turn_sign=0;self.reversals=[];self.lastuse=-100;self.auto_doors=False;self.avoid=False;self.nav=None;self.door_used={};self.t=[];self.trace=[];self.state={};self.prefix=ROOT+f'/work/sim{os.getpid()}'
   for ext in ['in','out']:
    p=self.prefix+'.'+ext
    if os.path.exists(p):os.unlink(p)
@@ -75,7 +75,7 @@ class Sim:
      if self.combat_lock:
       target=next((o for o in enemies if len(o)>9 and o[9]==self.target_id),None)
       if target is None:
-       target=min(enemies,key=lambda o:math.hypot(o[1]-px,o[2]-py)*(.5 if o[0]==2 else .75 if o[0]==1 else 1))
+       target=min(enemies,key=lambda o:math.hypot(o[1]-px,o[2]-py)*((.12 if o[0]==2 else .3 if o[0]==1 else 1) if self.hitscan_priority else (.5 if o[0]==2 else .75 if o[0]==1 else 1)))
        self.target_id=target[9] if len(target)>9 else None
      else:
       target=min(enemies,key=lambda o:math.hypot(o[1]-px,o[2]-py)*(0.25 if self.near and ((o[1]-px)*dx+(o[2]-py)*dy)>math.hypot(o[1]-px,o[2]-py)*dist*.75 and math.hypot(o[1]-px,o[2]-py)<120 else 1))
