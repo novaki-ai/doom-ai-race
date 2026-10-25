@@ -26,3 +26,6 @@ trial 24 exit 12.37 tics 435 dead None  NEW BEST saved
 trial 25 exit 12.69 tics 444 dead None
 trial 26 exit 15.8 tics 556 dead None
 trial 27 exit None tics 315 dead False
+trial 28 exit 15.03 tics 528 dead None
+trial 29 exit None tics 288 dead False
+trial 30 exit None tics 284 dead False
