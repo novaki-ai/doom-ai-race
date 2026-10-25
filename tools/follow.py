@@ -207,6 +207,8 @@ def follow(mapnum, wps, prefix=(), max_tics=3000, K=4, verbose=False, stuck_tics
             while wi < len(wps):
                 w = wps[wi]
                 if math.hypot(w['x'] - x, w['y'] - y) < w.get('r', 40):
+                    if w.get('until') and len(tics) < w['until']:
+                        break
                     wi += 1
                 elif (nav is not None and wi + 1 < len(wps) and not (set(w) & {'face', 'use', 'hard', 'fire'})
                       and math.hypot(w['x'] - x, w['y'] - y) < 160 and nav.los((x, y), (wps[wi + 1]['x'], wps[wi + 1]['y']))):
@@ -236,6 +238,7 @@ def follow(mapnum, wps, prefix=(), max_tics=3000, K=4, verbose=False, stuck_tics
                     cx, cy = ax + tt * vx, ay + tt * vy
                     if math.hypot(cx - x, cy - y) < 110:
                         fo = math.degrees(math.atan2(cy - y, cx - x)); break
+            holding = bool(w.get('until') and len(tics) < w['until'] and math.hypot(w['x'] - x, w['y'] - y) < w.get('r', 40) + 24)
             fire_now = False
             near_door = False
             if m is not None:
@@ -255,7 +258,7 @@ def follow(mapnum, wps, prefix=(), max_tics=3000, K=4, verbose=False, stuck_tics
                     ax_, ay_ = w['aim']; fo = math.degrees(math.atan2(ay_ - y, ax_ - x)); fire_now = True; tap = True
                 else:
                     fo = math.degrees(math.atan2(w['y'] - y, w['x'] - x)); fire_now = True
-            f, s, t = plan_tic(i, x, y, a, mx, my, w['x'], w['y'], L, slow=w.get('slow'), face=fo)
+            f, s, t = plan_tic(i, x, y, a, mx, my, w['x'], w['y'], L, slow=(4 if holding else w.get('slow')), face=fo)
             if 'face' in w and math.hypot(w['x'] - x, w['y'] - y) < w.get('facer', 0):
                 d = wrap(w['face'] - a)
                 t = max(-MAXT, min(MAXT, int(round(d / TU))))

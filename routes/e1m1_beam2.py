@@ -10,5 +10,5 @@ for L in legs: print([(round(w['x']), round(w['y'])) for w in L])
 from nav import Nav
 kw = dict(max_tics=700, nav=Nav('E1M1'), m=m, uselines={151, 152, 340, 341, 324, 325, 330}, repeat_use={330})
 n = int(sys.argv[1]) if len(sys.argv) > 1 else 12
-best = beam_legs(1, legs, n=n, beam=4, jitter=16, follow_kw=kw, seed=int(sys.argv[2]) if len(sys.argv) > 2 else 5, out='e1m1_beam2.lmp', final_n=n * 2)
+best = beam_legs(1, legs, n=n, beam=4, jitter=16, follow_kw=kw, seed=int(sys.argv[2]) if len(sys.argv) > 2 else 5, out=(sys.argv[3] if len(sys.argv) > 3 else 'e1m1_beam2.lmp'), final_n=n * 2)
 print('BEST', best[0] if best else None)
