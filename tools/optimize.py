@@ -81,3 +81,58 @@ def beam_legs(mapnum, legs, n=12, beam=3, jitter=20, follow_kw=None, seed=1, out
             if out: sim.write_lmp(out, mapnum, best[1])
             return best
     return None
+
+
+def leg_plan(mapname, a, b, overrides=None, blocked=(), r=40, last_extra=None):
+    """A* leg with per-leg map state. Returns (wps, door_lines_on_path, nav)."""
+    from nav import Nav
+    N = Nav(mapname, overrides=overrides)
+    for k in range(N.W * N.H):
+        if N.sec[k] in blocked: N.ok[k] = 0
+    res = N.path(a, b)
+    if res is None: raise RuntimeError(f'no path {a} -> {b}')
+    pts, secs = res
+    sm = N.smooth(pts)
+    wps = [dict(x=p[0], y=p[1], r=r) for p in sm[1:]]
+    if last_extra: wps[-1].update(last_extra)
+    m = N.m
+    onpath = set(secs)
+    doors = set()
+    for i, (v1, v2, fl, sp, tg, s1, s2) in enumerate(m.lines):
+        if sp in (1, 26, 27, 28, 31, 32, 33, 34, 117, 118) and m.lsec[i][1] in onpath:
+            doors.add(i)
+    return wps, doors, N
+
+def beam_legs2(mapnum, legs, n=8, beam=2, jitter=16, seed=1, out=None, log=None, final_n=None, prefix=None):
+    """legs: list of (wps, follow_kw). Like beam_legs but with per-leg follow kwargs."""
+    rng = random.Random(seed)
+    prefixes = [list(prefix or [])]
+    for li, (leg, kw0) in enumerate(legs):
+        last = li == len(legs) - 1
+        cands = []
+        for pi, pre in enumerate(prefixes):
+            nn = (final_n or n) if last else n
+            for k in range(nn):
+                wps = leg if k == 0 else jittered(leg, jitter, rng, keep_last=True)
+                kw = dict(kw0)
+                kw['K'] = 4 if k == 0 else rng.choice([3, 4, 4, 5])
+                tics, res = follow(mapnum, wps, prefix=pre, stop_at_end=not last, **kw)
+                ok = (res.exit_time is not None) if last else (getattr(res, 'reached', False) and not res.dead)
+                msg = f'leg {li} prefix {pi} trial {k}: ok {ok} tics {len(tics)} exit {res.exit_time} pain {pain_count(res)} last {[round(v) for v in res.pos[-1][:2]] if res.pos else None}'
+                print(msg, flush=True)
+                if log: open(log, 'a').write(msg + '\n')
+                if ok:
+                    key = (res.exit_time if last else len(tics), pain_count(res))
+                    cands.append((key, tics, res))
+                    if out and not last:
+                        sim.write_lmp(out.replace('.lmp', f'_leg{li}.lmp'), mapnum, tics)
+        if not cands:
+            print('leg', li, 'failed for all prefixes', flush=True)
+            return None
+        cands.sort(key=lambda c: c[0])
+        prefixes = [c[1] for c in cands[:beam]]
+        if last:
+            best = cands[0]
+            if out: sim.write_lmp(out, mapnum, best[1])
+            return best
+    return None

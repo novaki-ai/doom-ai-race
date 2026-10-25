@@ -107,12 +107,47 @@ def use_hit(m, x, y, a, uselines):
     if best and best[1] in uselines: return best[1]
     return None
 
+DR_SPECIALS = {1, 26, 27, 28, 117}
+D1_SPECIALS = {31, 32, 33, 34, 118}
+_door_cache = {}
+def door_info(m):
+    """door sector -> open height (top - floor) for manual doors"""
+    key = id(m)
+    if key in _door_cache: return _door_cache[key]
+    nbr = {}
+    for (fs, bs) in m.lsec:
+        if fs >= 0 and bs >= 0:
+            nbr.setdefault(fs, set()).add(bs); nbr.setdefault(bs, set()).add(fs)
+    info = {}
+    for i, (v1, v2, fl, sp, tg, s1, s2) in enumerate(m.lines):
+        if (sp in DR_SPECIALS or sp in D1_SPECIALS) and m.lsec[i][1] >= 0:
+            ds = m.lsec[i][1]
+            top = min((m.sectors[n][1] for n in nbr.get(ds, ()) if n != ds), default=m.sectors[ds][1]) - 4
+            info[ds] = max(0, top - m.sectors[ds][0])
+    _door_cache[key] = info
+    return info
+
+def prefix_door_presses(m, prefix, pos):
+    """door sector -> last tic a use press hit one of its lines (reconstructed from the replay)."""
+    out = {}
+    if m is None: return out
+    dl = {i for i, l in enumerate(m.lines) if l[3] in DR_SPECIALS or l[3] in D1_SPECIALS}
+    prev = 0
+    for i, t in enumerate(prefix):
+        if t[3] & 2 and not prev & 2 and i >= 1 and i < len(pos):
+            hit = use_hit(m, pos[i - 1][0], pos[i - 1][1], pos[i][3], dl)
+            if hit is not None:
+                out[m.lsec[hit][1]] = (i, m.lines[hit][3])
+        prev = t[3]
+    return out
+
 def follow(mapnum, wps, prefix=(), max_tics=3000, K=4, verbose=False, stuck_tics=70, m=None, uselines=(), repeat_use=(), stop_at_end=False, nav=None):
     """wps: list of dicts {x, y, r=radius, use=bool, fire=bool, wait=tics, slow=v}. Returns (tics, result)."""
     tics = list(prefix)
     L = rebuild_limits(tics)
     wi = 0
     used = set(); used_at = {}
+    door_press = None
     best_prog = (0, 1e9); last_prog_tic = len(tics)
     res = None
     while len(tics) < max_tics:
@@ -130,6 +165,8 @@ def follow(mapnum, wps, prefix=(), max_tics=3000, K=4, verbose=False, stuck_tics
         if tics and not res.pos:
             res.dead = True
             return tics, res
+        if door_press is None:
+            door_press = prefix_door_presses(m, tics, res.pos) if (m is not None and tics) else {}
         if tics:
             p = res.pos
             if len(p) < len(tics):   # ghost may lag one record
@@ -196,8 +233,17 @@ def follow(mapnum, wps, prefix=(), max_tics=3000, K=4, verbose=False, stuck_tics
                 hit = use_hit(m, x, y, a + t * TU, uselines)
                 if hit is not None and hit in used and hit not in repeat_use and stuck and i - used_at.get(hit, 0) > 45:
                     used.discard(hit)
+                if hit is not None and hit not in repeat_use and m.lsec[hit][1] in door_press:
+                    t0, sp0 = door_press[m.lsec[hit][1]]
+                    H = door_info(m).get(m.lsec[hit][1], 72)
+                    if sp0 in D1_SPECIALS or i - t0 < H / 2 + 150:
+                        used.add(hit); used_at.setdefault(hit, i)   # still open (or opening): never press
+                    elif hit in used and i - used_at.get(hit, 0) > 45:
+                        used.discard(hit)
                 if hit is not None and (hit not in used or hit in repeat_use) and L.can_press(L.use, i, 6) and not (tics and tics[-1][3] & 2):
                     b |= 2; used.add(hit); used_at[hit] = i
+                    if m.lsec[hit][1] >= 0 and m.lines[hit][3] in DR_SPECIALS | D1_SPECIALS:
+                        door_press[m.lsec[hit][1]] = (i, m.lines[hit][3])
                     # all lines of the same door sector count as used (pressing the far side would close it)
                     for lj in uselines:
                         if lj != hit and set(m.lsec[lj]) & ({m.lsec[hit][1]} - {-1}):
