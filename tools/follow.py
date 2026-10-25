@@ -107,12 +107,12 @@ def use_hit(m, x, y, a, uselines):
     if best and best[1] in uselines: return best[1]
     return None
 
-def follow(mapnum, wps, prefix=(), max_tics=3000, K=4, verbose=False, stuck_tics=70, m=None, uselines=(), repeat_use=()):
+def follow(mapnum, wps, prefix=(), max_tics=3000, K=4, verbose=False, stuck_tics=70, m=None, uselines=(), repeat_use=(), stop_at_end=False):
     """wps: list of dicts {x, y, r=radius, use=bool, fire=bool, wait=tics, slow=v}. Returns (tics, result)."""
     tics = list(prefix)
     L = rebuild_limits(tics)
     wi = 0
-    used = set()
+    used = set(); used_at = {}
     best_prog = (0, 1e9); last_prog_tic = len(tics)
     res = None
     while len(tics) < max_tics:
@@ -152,6 +152,8 @@ def follow(mapnum, wps, prefix=(), max_tics=3000, K=4, verbose=False, stuck_tics
                 else:
                     break
             if wi >= len(wps):
+                if stop_at_end:
+                    break
                 w = wps[-1]
             else:
                 w = wps[wi]
@@ -167,7 +169,13 @@ def follow(mapnum, wps, prefix=(), max_tics=3000, K=4, verbose=False, stuck_tics
                     if math.hypot(cx - x, cy - y) < 110:
                         fo = math.degrees(math.atan2(cy - y, cx - x)); break
             fire_now = False
-            if stuck and fo is None:
+            near_door = False
+            if m is not None:
+                for li in uselines:
+                    v1, v2 = m.lines[li][0], m.lines[li][1]
+                    (ax, ay), (bx, by) = m.verts[v1], m.verts[v2]
+                    if math.hypot((ax + bx) / 2 - x, (ay + by) / 2 - y) < 90: near_door = True
+            if stuck and fo is None and not near_door:
                 fo = math.degrees(math.atan2(w['y'] - y, w['x'] - x)); fire_now = True
             f, s, t = plan_tic(i, x, y, a, mx, my, w['x'], w['y'], L, slow=w.get('slow'), face=fo)
             if 'face' in w and math.hypot(w['x'] - x, w['y'] - y) < w.get('facer', 0):
@@ -180,8 +188,14 @@ def follow(mapnum, wps, prefix=(), max_tics=3000, K=4, verbose=False, stuck_tics
             b = 0
             if m is not None and uselines:
                 hit = use_hit(m, x, y, a + t * TU, uselines)
+                if hit is not None and hit in used and hit not in repeat_use and stuck and i - used_at.get(hit, 0) > 45:
+                    used.discard(hit)
                 if hit is not None and (hit not in used or hit in repeat_use) and L.can_press(L.use, i, 6) and not (tics and tics[-1][3] & 2):
-                    b |= 2; used.add(hit)
+                    b |= 2; used.add(hit); used_at[hit] = i
+                    # all lines of the same door sector count as used (pressing the far side would close it)
+                    for lj in uselines:
+                        if lj != hit and set(m.lsec[lj]) & ({m.lsec[hit][1]} - {-1}):
+                            used.add(lj); used_at[lj] = i
             # use presses near 'use' waypoints (current or just passed)
             for ww in wps[max(0, wi - 1): wi + 1]:
                 if ww.get('use') and math.hypot(ww['x'] - x, ww['y'] - y) < ww.get('user', 96):
@@ -196,6 +210,11 @@ def follow(mapnum, wps, prefix=(), max_tics=3000, K=4, verbose=False, stuck_tics
             if b & 1: L.fire.append(i)
             tics.append((f, s, t, b))
             x, y, a, mx, my = step_model(x, y, a, mx, my, f, s, t)
+        if stop_at_end and wi >= len(wps):
+            res = sim.run(mapnum, tics)
+            res.dead = bool(res.pos and (res.pos[-1][5] & 0x7fff) >= 7)
+            res.reached = True
+            return tics, res
         # progress tracking
         prog = (wi, math.hypot(wps[min(wi, len(wps)-1)]['x'] - x, wps[min(wi, len(wps)-1)]['y'] - y))
         if prog[0] > best_prog[0] or (prog[0] == best_prog[0] and prog[1] < best_prog[1] - 8):
