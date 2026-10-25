@@ -10,10 +10,10 @@ USE = {325, 291, 326, 527, 777, 854, 873}
 segs = [
     dict(goals=[(1440, 352), (1140, 352, dict(must=True, r=20, fixed=True))]),
     dict(goals=[(1350, 352), (-670, 384, dict(jit=6)), (-790, 384, dict(jit=6)), (-1000, 470)], unuse={291}),
-    dict(goals=[(-1540, 1520)]),
-    dict(goals=[(-1536, 2070, dict(face=90, facer=60, jit=8))], ov=OV),
+    dict(goals=[(-1504, 1440, dict(jit=6)), (-1504, 1530, dict(jit=4, must=True, r=20))], tries=8),
+    dict(goals=[(-1490, 2078, dict(face=90, facer=50, jit=5))], ov=OV, tries=8),
     dict(goals=[(-1400, 2080, dict(jit=4)), (-1340, 2270)], ov=OV),
-    dict(goals=[(-660, 2336, dict(jit=8)), (-290, 2336, dict(face=0, facer=100, r=10, fixed=True))], ov=OV),
+    dict(goals=[(-660, 2336, dict(jit=6)), (-576, 2420, dict(jit=8, must=True, r=24)), (-352, 2400, dict(jit=8)), (-352, 2336, dict(jit=4)), (-290, 2336, dict(face=0, facer=100, r=10, fixed=True))], ov=OV, tries=10, max=900),
 ]
 start_seg = int(sys.argv[1]) if len(sys.argv) > 1 else 0
 tries = int(sys.argv[2]) if len(sys.argv) > 2 else 5

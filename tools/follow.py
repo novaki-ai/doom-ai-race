@@ -107,7 +107,7 @@ def use_hit(m, x, y, a, uselines):
     if best and best[1] in uselines: return best[1]
     return None
 
-def follow(mapnum, wps, prefix=(), max_tics=3000, K=4, verbose=False, stuck_tics=70, m=None, uselines=(), repeat_use=(), stop_at_end=False):
+def follow(mapnum, wps, prefix=(), max_tics=3000, K=4, verbose=False, stuck_tics=70, m=None, uselines=(), repeat_use=(), stop_at_end=False, nav=None):
     """wps: list of dicts {x, y, r=radius, use=bool, fire=bool, wait=tics, slow=v}. Returns (tics, result)."""
     tics = list(prefix)
     L = rebuild_limits(tics)
@@ -127,6 +127,9 @@ def follow(mapnum, wps, prefix=(), max_tics=3000, K=4, verbose=False, stuck_tics
         if len(res.pos) > 8:
             p1, p0 = res.pos[-1], res.pos[-7]
             if math.hypot(p1[0] - p0[0], p1[1] - p0[1]) < 6: stuck = True
+        if tics and not res.pos:
+            res.dead = True
+            return tics, res
         if tics:
             p = res.pos
             if len(p) < len(tics):   # ghost may lag one record
@@ -149,6 +152,9 @@ def follow(mapnum, wps, prefix=(), max_tics=3000, K=4, verbose=False, stuck_tics
                 w = wps[wi]
                 if math.hypot(w['x'] - x, w['y'] - y) < w.get('r', 40):
                     wi += 1
+                elif (nav is not None and wi + 1 < len(wps) and not (set(w) & {'face', 'use', 'hard', 'fire'})
+                      and math.hypot(w['x'] - x, w['y'] - y) < 160 and nav.los((x, y), (wps[wi + 1]['x'], wps[wi + 1]['y']))):
+                    wi += 1   # next waypoint already visible: cut the corner
                 else:
                     break
             if wi >= len(wps):

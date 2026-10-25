@@ -18,7 +18,14 @@ def write_lmp(path, mapnum, tics):
 class Result:
     pass
 
-def run(mapnum, tics, keep=None):
+def run(mapnum, tics, keep=None, _retry=2):
+    r = _run(mapnum, tics, keep)
+    while _retry and tics and len(tics) > 2 and not r.pos and r.exit_time is None:
+        _retry -= 1
+        r = _run(mapnum, tics, keep)
+    return r
+
+def _run(mapnum, tics, keep=None):
     """Replay; returns Result with .pos list (after each tic: x,y,z,angle(deg),sprite,frame), .exit_time (seconds or None)."""
     os.makedirs(WORK, exist_ok=True)
     with tempfile.TemporaryDirectory(dir=WORK) as d:
