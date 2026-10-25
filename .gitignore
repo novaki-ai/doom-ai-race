@@ -1,2 +1,4 @@
 game/DOOM1.WAD
 *.wad
+*.pkl
+work/tmp*

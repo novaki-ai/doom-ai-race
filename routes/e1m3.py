@@ -23,6 +23,36 @@ add(w, d, N)
 # 2: stairs (wait for them to rise) -> exit switch line 982 (face south)
 w, d, N = leg_plan('E1M3', (-200, -1600), (704, -1724), overrides=ov2, last_extra=dict(face=270, facer=120, r=8))
 add(w, d, N, stuck=300, extra_use={982}, repeat={982})
+def split_legs(legs, maxw=5):
+    out = []
+    for w, kw in legs:
+        cur = []
+        for j, p in enumerate(w):
+            cur.append(p)
+            nxt = w[j + 1] if j + 1 < len(w) else None
+            approach_next = nxt is not None and nxt.get('hard') and nxt.get('r', 40) <= 14
+            if len(cur) >= maxw and nxt is not None and not (p.get('hard') and p.get('r', 40) <= 14) and not approach_next:
+                q = dict(cur[-1]); q['hard'] = 1; q['r'] = max(24, q.get('r', 40)); cur[-1] = q
+                out.append((cur, kw)); cur = []
+        if cur: out.append((cur, kw))
+    return out
+def densify(legs, step=220):
+    out = []
+    for w, kw in legs:
+        nw = []
+        prev = None
+        for p in w:
+            if prev is not None and not (prev.get('hard') and prev.get('r', 40) <= 14):
+                d = ((p['x'] - prev['x']) ** 2 + (p['y'] - prev['y']) ** 2) ** 0.5
+                n = int(d // step)
+                for k in range(1, n + 1):
+                    f = k / (n + 1)
+                    nw.append(dict(x=prev['x'] + (p['x'] - prev['x']) * f, y=prev['y'] + (p['y'] - prev['y']) * f, r=40))
+            nw.append(p); prev = p
+        out.append((nw, kw))
+    return out
+legs = split_legs(densify(legs), maxw=3)
+CORRIDOR = set(i for i, (w, kw) in enumerate(legs) if any(-1990 < p['x'] < -1700 and -2470 < p['y'] < -1500 for p in w))
 for i, (w, kw) in enumerate(legs):
     print(i, len(w), [(round(p['x']), round(p['y'])) for p in w][:8], sorted(kw['uselines']))
 if __name__ == '__main__':

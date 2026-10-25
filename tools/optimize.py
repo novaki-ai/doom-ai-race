@@ -134,7 +134,7 @@ def leg_plan(mapname, a, b, overrides=None, blocked=(), r=40, last_extra=None):
             doors.add(i)
     return wps, doors, N
 
-def beam_legs2(mapnum, legs, n=8, beam=2, jitter=16, seed=1, out=None, log=None, final_n=None, prefix=None):
+def beam_legs2(mapnum, legs, n=8, beam=2, jitter=16, seed=1, out=None, log=None, final_n=None, prefix=None, safe=False):
     """legs: list of (wps, follow_kw). Like beam_legs but with per-leg follow kwargs."""
     rng = random.Random(seed)
     prefixes = [list(prefix or [])]
@@ -154,6 +154,7 @@ def beam_legs2(mapnum, legs, n=8, beam=2, jitter=16, seed=1, out=None, log=None,
                 if log: open(log, 'a').write(msg + '\n')
                 if ok:
                     key = (res.exit_time if last else len(tics), pain_count(res))
+                    if safe and not last: key = (pain_count(res), len(tics))
                     cands.append((key, tics, res))
                     if out and not last:
                         sim.write_lmp(out.replace('.lmp', f'_leg{li}.lmp'), mapnum, tics)

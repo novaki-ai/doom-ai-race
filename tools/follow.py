@@ -215,6 +215,10 @@ def follow(mapnum, wps, prefix=(), max_tics=3000, K=4, verbose=False, stuck_tics
                     break
             if k == 0:
                 wi_conf = wi       # advancement checked against the engine's actual position
+                if stop_at_end and wi_conf >= len(wps):
+                    res.dead = bool(res.pos and (res.pos[-1][5] & 0x7fff) >= 7)
+                    res.reached = True
+                    return tics, res
             if wi >= len(wps):
                 if stop_at_end:
                     break
@@ -240,6 +244,12 @@ def follow(mapnum, wps, prefix=(), max_tics=3000, K=4, verbose=False, stuck_tics
                     (ax, ay), (bx, by) = m.verts[v1], m.verts[v2]
                     if math.hypot((ax + bx) / 2 - x, (ay + by) / 2 - y) < 90: near_door = True
             tap = False
+            if w.get('fire_ahead') and fo is None and not near_door:
+                if stuck and 'aim' in w:
+                    fo = math.degrees(math.atan2(w['aim'][1] - y, w['aim'][0] - x))
+                else:
+                    fo = math.degrees(math.atan2(w['y'] - y, w['x'] - x))
+                fire_now = True; tap = True
             if stuck and fo is None and not near_door:
                 if 'aim' in w:
                     ax_, ay_ = w['aim']; fo = math.degrees(math.atan2(ay_ - y, ax_ - x)); fire_now = True; tap = True
@@ -290,15 +300,10 @@ def follow(mapnum, wps, prefix=(), max_tics=3000, K=4, verbose=False, stuck_tics
             elif fire_now and (tics and tics[-1][3] & 1 or L.can_press(L.fire, i, 6)):
                 b |= 1
             L.do_turn(i, t)
-            if b & 2: L.use.append(i)
-            if b & 1: L.fire.append(i)
+            if b & 2 and not (tics and tics[-1][3] & 2): L.use.append(i)
+            if b & 1 and not (tics and tics[-1][3] & 1): L.fire.append(i)
             tics.append((f, s, t, b))
             x, y, a, mx, my = step_model(x, y, a, mx, my, f, s, t)
-        if stop_at_end and wi >= len(wps):
-            res = sim.run(mapnum, tics)
-            res.dead = bool(res.pos and (res.pos[-1][5] & 0x7fff) >= 7)
-            res.reached = True
-            return tics, res
         # progress tracking
         prog = (wi, math.hypot(wps[min(wi, len(wps)-1)]['x'] - x, wps[min(wi, len(wps)-1)]['y'] - y))
         if prog[0] > best_prog[0] or (prog[0] == best_prog[0] and prog[1] < best_prog[1] - 8):

@@ -24,7 +24,16 @@
   route. Near a pending door it turns to face it. The two lines of the same door sector are grouped, because using
   an opening door again closes it. When the player is blocked away from doors (usually by a monster) it faces the
   path and holds fire. Death is read from the player sprite frame.
-- `tools/optimize.py`: random search over waypoint jitter and K, keeping the fastest run that exits alive.
+- `tools/optimize.py`: random search over waypoint jitter and K, keeping the fastest run that exits alive;
+  `beam_legs`/`beam_legs2`: leg-by-leg beam search. A route is cut into legs. Each leg is tried n times with
+  jittered waypoints from each of the best kept prefixes, and the fastest alive prefixes (ties broken by fewest pain
+  hits) are kept. `leg_plan` plans one leg with its own map state (lift up or down, stairs raised, locked doors
+  blocked) and inserts a square approach point in front of every door on the path.
+- Follower details that mattered: waypoint progress is confirmed only from the replayed (true) position; use presses
+  are re-checked against the replay and undone if they missed; open DR doors are never pressed again (that would
+  close them), using press times rebuilt from the prefix; line-of-sight corner cutting with the nav grid
+  (E1M1 first leg 123 -> 108 tics); 'aim' waypoints make a blocked player face a known monster spot and tap-fire
+  (the first pistol shot of a press has no spread).
 
 ## How the demos were made
 Each map has a script in routes/ that plans waypoints with nav (in legs: start -> key -> door -> exit), runs the
@@ -35,6 +44,13 @@ Maps E1M2-E1M7 were routed by helper agents with the same tools (their notes are
 E1M8 has no exit line. The level ends in a teleporter-only room whose floor is sector special 11, which exits once
 health is 10 or less. The teleporter is beyond walls (tag 666) that lower only when both Barons (1000 HP each) are
 dead. After that, a stair (build-8 at 0.25 units/tic) must rise for about 11 s. I found no shortcut in the map data.
+
+## Maps
+- E1M1: start -> north corridor -> door -> north room -> zigzag room -> two doors south -> exit switch.
+  7-leg beam search with corner cutting: 14.37 s first, then 12.37, 11.91 and 10.09 s.
+- E1M7 (not submitted): needs the yellow key (east lift, an imp in a 64-unit corridor, 3 shotgun guys at the key),
+  then the west lift for the red key, then the red door for the blue key, then the yellow and blue doors: about
+  21,600 units in total. My follower always died at the yellow key, even after picking up the green armour first.
 
 ## With more time
 - Make the follower monster-aware (read monster positions, for example from savegame-format key frames) to dodge,

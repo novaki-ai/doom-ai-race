@@ -1,0 +1,18 @@
+leg 0 prefix 0 trial 0: ok False tics 200 exit None pain 4 last [-1862, -2777]
+leg 0 prefix 0 trial 1: ok False tics 153 exit None pain 3 last [-1865, -2926]
+leg 0 prefix 0 trial 2: ok False tics 245 exit None pain 3 last [-1846, -2554]
+leg 0 prefix 0 trial 3: ok True tics 235 exit None pain 2 last [-1902, -2518]
+leg 0 prefix 0 trial 4: ok False tics 160 exit None pain 1 last [-1873, -2880]
+leg 0 prefix 0 trial 5: ok False tics 184 exit None pain 3 last [-1869, -2771]
+leg 0 prefix 0 trial 6: ok False tics 216 exit None pain 6 last [-1889, -2751]
+leg 0 prefix 0 trial 7: ok False tics 200 exit None pain 4 last [-1862, -2777]
+leg 1 prefix 0 trial 0: ok False tics 335 exit None pain 4 last [-1863, -2247]
+leg 1 prefix 0 trial 1: ok False tics 347 exit None pain 3 last [-1885, -2256]
+leg 1 prefix 0 trial 2: ok False tics 360 exit None pain 4 last [-1872, -2179]
+leg 1 prefix 0 trial 3: ok False tics 425 exit None pain 4 last [-1887, -1632]
+leg 1 prefix 0 trial 4: ok False tics 311 exit None pain 4 last [-1878, -2300]
+leg 1 prefix 0 trial 5: ok False tics 315 exit None pain 3 last [-1880, -2256]
+leg 1 prefix 0 trial 6: ok False tics 335 exit None pain 4 last [-1862, -2245]
+leg 1 prefix 0 trial 7: ok False tics 355 exit None pain 4 last [-1872, -2227]
+leg 1 failed for all prefixes
+BEST None
