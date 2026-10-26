@@ -1,0 +1,95 @@
+{
+  "E1M1.lmp": {
+    "valid": true,
+    "time": "0:11.29",
+    "problems": [],
+    "notes": [
+      "395 tics; exit at tic 395 (the last tic) by a new use press on S1 exit switch linedef 330; 0 tics of margin after the exit",
+      "header OK: v109, skill 3 (UV), E1M1, deathmatch/respawn/fast/nomonsters 0, consoleplayer 0, player 1 only; 0x80 is the last byte, no footer",
+      "turn reversals at zero margin: 7 reversals with the 1st and 7th 35 tics apart (tics 204..239). Passes 'at most 6 in any 35 consecutive tics'; would fail if the window were read as 36 tics",
+      "5 tics turn exactly 11776 units (the allowed maximum)",
+      "DSDA-Doom analysis category 'Pacifist' (2 kills not by the player); not a problem for UV-Speed"
+    ]
+  },
+  "E1M2.lmp": {
+    "valid": true,
+    "time": "0:48.06",
+    "problems": [],
+    "notes": [
+      "1682 tics; exit at tic 1682 (the last tic) by a new use press on S1 exit switch linedef 873; 0 tics of margin after the exit",
+      "header OK, no footer",
+      "turn reversals at zero margin: 7 reversals 35 tics apart (tics 303..338); would fail a 36-tic window reading",
+      "60 tics turn exactly 11776 units (the allowed maximum)"
+    ]
+  },
+  "E1M3.lmp": {
+    "valid": true,
+    "time": "1:23.09",
+    "problems": [],
+    "notes": [
+      "2908 tics; exit at tic 2908 (the last tic) by a new use press on the normal S1 exit, linedef 982 (not the secret exit, linedef 785); 0 tics of margin",
+      "header OK, no footer",
+      "turn reversals at zero margin: 7 reversals 35 tics apart (tics 629..664); would fail a 36-tic window reading",
+      "113 tics turn exactly 11776 units (the allowed maximum)"
+    ]
+  },
+  "E1M4.lmp": {
+    "valid": true,
+    "time": "0:16.63",
+    "problems": [],
+    "notes": [
+      "582 tics; exit at tic 582 (the last tic) by a new use press on S1 exit switch linedef 554; 0 tics of margin",
+      "header OK, no footer",
+      "turn reversals at zero margin: 7 reversals 35 tics apart (tics 93..128); would fail a 36-tic window reading",
+      "18 tics turn exactly 11776 units (the allowed maximum)",
+      "final tics run forward 50 while sidemove alternates -1/+1/0 every tic: inside the 'any value -50..50' rule but not keyboard-like"
+    ]
+  },
+  "E1M5.lmp": {
+    "valid": true,
+    "time": "1:42.37",
+    "problems": [],
+    "notes": [
+      "3583 tics; exit at tic 3583 (the last tic) by a new use press on S1 exit switch linedef 409; 0 tics of margin",
+      "header OK, no footer",
+      "turn reversals at zero margin: 7 reversals 35 tics apart (tics 239..274); would fail a 36-tic window reading",
+      "197 tics turn exactly 11776 units (the allowed maximum)",
+      "same 3583-tic time as E1M8; checked, both replays are independent and genuine (coincidence)"
+    ]
+  },
+  "E1M6.lmp": {
+    "valid": true,
+    "time": "2:35.89",
+    "problems": [],
+    "notes": [
+      "5456 tics; exit at tic 5456 (the last tic) by a new use press on S1 exit switch linedef 627; 0 tics of margin",
+      "header OK, no footer",
+      "turn reversals at zero margin: 7 reversals 35 tics apart (tics 52..87); would fail a 36-tic window reading",
+      "232 tics turn exactly 11776 units (the allowed maximum)"
+    ]
+  },
+  "E1M7.lmp": {
+    "valid": true,
+    "time": "2:22.40",
+    "problems": [],
+    "notes": [
+      "4984 tics; exit at tic 4984 (the last tic) by a new use press on S1 exit switch linedef 810; 0 tics of margin",
+      "header OK, no footer",
+      "turn reversals at zero margin: 7 reversals 35 tics apart (tics 92..127); would fail a 36-tic window reading",
+      "236 tics turn exactly 11776 units (the allowed maximum)",
+      "weapon changes to slots 1, 2 and 4 (pistol, shotgun, rocket launcher); allowed"
+    ]
+  },
+  "E1M8.lmp": {
+    "valid": true,
+    "time": "1:42.37",
+    "problems": [],
+    "notes": [
+      "3641 tics; exit at tic 3583 in sector 66 (special 11, the E1M8 'health <= 10%' ending), reached by teleport at tic 3544; the 58 tics after the exit are intermission and have no effect",
+      "not an exit by death: no death frames, analysis 'reborn 0', and special 11 caps damage at health-1. The last hit, at tic 3580, is not the 32-tic floor damage, so it is monster damage",
+      "header OK, no footer; 94 trailing all-zero tics (standing in the exit room)",
+      "turn reversals at zero margin: 7 reversals 35 tics apart (tics 278..313); would fail a 36-tic window reading",
+      "63 tics turn exactly 11776 units (the allowed maximum)"
+    ]
+  }
+}

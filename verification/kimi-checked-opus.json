@@ -1,0 +1,17 @@
+{
+  "E1M1.lmp": {
+    "valid": true,
+    "time": "0:10.06",
+    "problems": []
+  },
+  "E1M2.lmp": {
+    "valid": true,
+    "time": "0:30.80",
+    "problems": []
+  },
+  "E1M4.lmp": {
+    "valid": true,
+    "time": "0:13.43",
+    "problems": []
+  }
+}

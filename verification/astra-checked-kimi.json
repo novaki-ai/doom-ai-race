@@ -1,0 +1,86 @@
+{
+  "E1M1.lmp": {
+    "valid": true,
+    "time": "0:19.77",
+    "problems": [],
+    "exited": true,
+    "no_death": true,
+    "input_limits_valid": true,
+    "first_input_violation": null,
+    "demo_tics": 704,
+    "exit_level_tics": 692,
+    "minimum_health": 77,
+    "health_at_exit_or_demo_end": 77,
+    "first_death": null,
+    "header_valid": true,
+    "footer_bytes": 0,
+    "sha256": "557c4616f5a468066d06e200b1c289fb73ab0558996a9ee19736b81e1a6355fe"
+  },
+  "E1M2.lmp": {
+    "valid": false,
+    "time": null,
+    "problems": [
+      "Recording ends after 2417 tics in E1M2, alive with 46 health, without a map exit. No leaderboard time exists."
+    ],
+    "exited": false,
+    "no_death": true,
+    "input_limits_valid": true,
+    "first_input_violation": null,
+    "demo_tics": 2417,
+    "exit_level_tics": null,
+    "minimum_health": 46,
+    "health_at_exit_or_demo_end": 46,
+    "first_death": null,
+    "header_valid": true,
+    "footer_bytes": 0,
+    "sha256": "b401f5d92158ee566870dc9c97091bd1adbf8a4b02415b6bc6c8b37d5f1a806a"
+  },
+  "E1M5.lmp": {
+    "valid": false,
+    "time": null,
+    "problems": [
+      "Player dies during input tic 667 (zero-based index 666); player health becomes 0.",
+      "Recording ends after 835 tics in E1M5, dead, without a map exit. No leaderboard time exists."
+    ],
+    "exited": false,
+    "no_death": false,
+    "input_limits_valid": true,
+    "first_input_violation": null,
+    "demo_tics": 835,
+    "exit_level_tics": null,
+    "minimum_health": 0,
+    "health_at_exit_or_demo_end": 0,
+    "first_death": {
+      "tic_one_based": 667,
+      "tic_zero_based": 666,
+      "command_byte_offset": 2677
+    },
+    "header_valid": true,
+    "footer_bytes": 0,
+    "sha256": "1725418f70dc1f1d3a4d4e80423d509d2e67e65d065e543261f93318e44ba264"
+  },
+  "E1M8.lmp": {
+    "valid": false,
+    "time": null,
+    "problems": [
+      "Player dies during input tic 566 (zero-based index 565); player health becomes 0.",
+      "Recording ends after 746 tics in E1M8, dead, without a map exit. No leaderboard time exists."
+    ],
+    "exited": false,
+    "no_death": false,
+    "input_limits_valid": true,
+    "first_input_violation": null,
+    "demo_tics": 746,
+    "exit_level_tics": null,
+    "minimum_health": 0,
+    "health_at_exit_or_demo_end": 0,
+    "first_death": {
+      "tic_one_based": 566,
+      "tic_zero_based": 565,
+      "command_byte_offset": 2273
+    },
+    "header_valid": true,
+    "footer_bytes": 0,
+    "sha256": "1c15d5d446d8495137e2c9401127d843379aa895381abb9f7a1c37178bf72d51"
+  }
+}

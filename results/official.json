@@ -1,0 +1,159 @@
+{
+ "opus": [
+  {
+   "demo": "/race/kayit/opus/son-teslim/E1M1.lmp",
+   "pass": true,
+   "problems": [],
+   "map": "E1M1",
+   "tics": 355,
+   "time": "0:10.06",
+   "seconds": 10.06,
+   "category": "UV Speed"
+  },
+  {
+   "demo": "/race/kayit/opus/son-teslim/E1M2.lmp",
+   "pass": true,
+   "problems": [],
+   "map": "E1M2",
+   "tics": 1081,
+   "time": "0:30.80",
+   "seconds": 30.8,
+   "category": "UV Speed"
+  },
+  {
+   "demo": "/race/kayit/opus/son-teslim/E1M4.lmp",
+   "pass": true,
+   "problems": [],
+   "map": "E1M4",
+   "tics": 471,
+   "time": "0:13.43",
+   "seconds": 13.43,
+   "category": "Pacifist"
+  }
+ ],
+ "astra": [
+  {
+   "demo": "/race/kayit/astra/son-teslim/E1M1.lmp",
+   "pass": true,
+   "problems": [],
+   "map": "E1M1",
+   "tics": 395,
+   "time": "0:11.29",
+   "seconds": 11.29,
+   "category": "Pacifist"
+  },
+  {
+   "demo": "/race/kayit/astra/son-teslim/E1M2.lmp",
+   "pass": true,
+   "problems": [],
+   "map": "E1M2",
+   "tics": 1682,
+   "time": "0:48.06",
+   "seconds": 48.06,
+   "category": "UV Speed"
+  },
+  {
+   "demo": "/race/kayit/astra/son-teslim/E1M3.lmp",
+   "pass": true,
+   "problems": [],
+   "map": "E1M3",
+   "tics": 2908,
+   "time": "1:23.09",
+   "seconds": 83.09,
+   "category": "UV Speed"
+  },
+  {
+   "demo": "/race/kayit/astra/son-teslim/E1M4.lmp",
+   "pass": true,
+   "problems": [],
+   "map": "E1M4",
+   "tics": 582,
+   "time": "0:16.63",
+   "seconds": 16.63,
+   "category": "UV Speed"
+  },
+  {
+   "demo": "/race/kayit/astra/son-teslim/E1M5.lmp",
+   "pass": true,
+   "problems": [],
+   "map": "E1M5",
+   "tics": 3583,
+   "time": "1:42.37",
+   "seconds": 102.37,
+   "category": "UV Speed"
+  },
+  {
+   "demo": "/race/kayit/astra/son-teslim/E1M6.lmp",
+   "pass": true,
+   "problems": [],
+   "map": "E1M6",
+   "tics": 5456,
+   "time": "2:35.89",
+   "seconds": 155.89,
+   "category": "UV Speed"
+  },
+  {
+   "demo": "/race/kayit/astra/son-teslim/E1M7.lmp",
+   "pass": true,
+   "problems": [],
+   "map": "E1M7",
+   "tics": 4984,
+   "time": "2:22.40",
+   "seconds": 142.4,
+   "category": "UV Speed"
+  },
+  {
+   "demo": "/race/kayit/astra/son-teslim/E1M8.lmp",
+   "pass": true,
+   "problems": [],
+   "map": "E1M8",
+   "tics": 3641,
+   "time": "1:42.37",
+   "seconds": 102.37,
+   "category": "UV Speed"
+  }
+ ],
+ "kimi": [
+  {
+   "demo": "/race/kayit/kimi/son-teslim/E1M1.lmp",
+   "pass": true,
+   "problems": [],
+   "map": "E1M1",
+   "tics": 704,
+   "time": "0:19.77",
+   "seconds": 19.77,
+   "category": "UV Speed"
+  },
+  {
+   "demo": "/race/kayit/kimi/son-teslim/E1M2.lmp",
+   "pass": false,
+   "problems": [
+    "the player does not exit E1M2 in the official replay"
+   ],
+   "map": "E1M2",
+   "tics": 2417,
+   "category": "UV Speed"
+  },
+  {
+   "demo": "/race/kayit/kimi/son-teslim/E1M5.lmp",
+   "pass": false,
+   "problems": [
+    "the player does not exit E1M5 in the official replay"
+   ],
+   "map": "E1M5",
+   "tics": 835,
+   "category": "UV Speed"
+  },
+  {
+   "demo": "/race/kayit/kimi/son-teslim/E1M8.lmp",
+   "pass": false,
+   "problems": [
+    "the player does not exit E1M8 in the official replay"
+   ],
+   "map": "E1M8",
+   "tics": 746,
+   "category": "UV Speed"
+  }
+ ],
+ "argon": []
+}
