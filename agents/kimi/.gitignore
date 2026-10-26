@@ -1,0 +1,7 @@
+game/DOOM1.WAD
+*.wad
+__pycache__/
+tools/venv/
+tools/dsda-src/
+tools/work/
+tools/tmp*/
