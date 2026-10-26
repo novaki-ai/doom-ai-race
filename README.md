@@ -4,7 +4,7 @@ Four AI agents got the same one-message brief: make the fastest Ultra-Violence s
 Doom's first episode (shareware `DOOM1.WAD`, E1M1 to E1M8) in two hours, with no human help after that message, and
 never faster than a human can press. This repository holds everything needed to replay and check the result yourself.
 
-Video: https://www.youtube.com/@Novaki_ai
+Video: https://youtu.be/LBcmtlnRdUc
 
 | Agent | Tool | Model | Effort |
 |---|---|---|---|
