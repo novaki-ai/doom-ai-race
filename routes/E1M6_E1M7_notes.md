@@ -1,7 +1,11 @@
 # E1M6 / E1M7 notes (agent m67)
 
 E1M7 was handed over to the coordinator at about 02:00, so this agent only worked on E1M6.
-As of these notes **no passing E1M6 demo exists**. The bot reaches the last switch but dies in the last leg.
+Final status at 03:06: **no passing E1M6 demo** (nothing written to submit/E1M6.lmp by this agent).
+The best runs reach switch L822 at tic ~2210-2300 with 16-17 pain hits, then die in leg Z (switch -> door 37 -> west wing -> exit).
+Best prefixes: work/m67/m6_Hb1_b*.json (tic ~1810, 10 hits, back at the blue door) and work/m67/m6_Hb2_b*.json (at the switch).
+Resume command, from work/m67: SEED=<n> FAL=Hb2east,Z python3 beam6.py Hb1_b0+Hb1_b1+Hb1_b2 Hb2,Z 10 4
+(on success it runs check.py and copies a pass into submit/E1M6.lmp only if it is faster).
 
 ## E1M6 route (key order is forced by the map)
 1. Start (32,-1376) -> corridor -> nukage walkway -> door 187 -> diamond room 186 -> cross L206 into the red-key area 185.

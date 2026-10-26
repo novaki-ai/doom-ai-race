@@ -69,7 +69,8 @@ dead. After that, a stair (build-8 at 0.25 units/tic) must rise for about 11 s. 
 - E1M6 (helper, plus 3 parallel searches at the end): red key -> red door -> blue key -> blue door -> far-east
   switch L438 -> yellow key -> yellow door -> north switch L822 -> west wing switch L599 -> exit L627. The route
   reaches L822 at about tic 2300, but with ~16 hits taken, and the final leg into the west wing (about 30 ambush
-  monsters and 7 spectres) kept killing the player.
+  monsters and 7 spectres) kept killing the player. In the last 20 minutes all four cores ran the final legs with
+  different seeds from every saved at-switch prefix: about 250 more tries, none survived.
 - E1M8: not attempted beyond analysis (see above).
 
 ## Organisation
