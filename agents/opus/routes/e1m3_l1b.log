@@ -1,0 +1,10 @@
+leg 0 prefix 0 trial 0: ok False tics 312 exit None pain 5 last [-1896, -2370]
+leg 0 prefix 0 trial 1: ok False tics 309 exit None pain 5 last [-1900, -2370]
+leg 0 prefix 0 trial 2: ok False tics 311 exit None pain 5 last [-1895, -2370]
+leg 0 prefix 0 trial 3: ok False tics 311 exit None pain 5 last [-1898, -2371]
+leg 0 prefix 0 trial 4: ok False tics 311 exit None pain 5 last [-1895, -2370]
+leg 0 prefix 0 trial 5: ok False tics 311 exit None pain 5 last [-1897, -2371]
+leg 0 prefix 0 trial 6: ok False tics 312 exit None pain 5 last [-1897, -2370]
+leg 0 prefix 0 trial 7: ok False tics 296 exit None pain 5 last [-1897, -2369]
+leg 0 failed for all prefixes
+BEST None
