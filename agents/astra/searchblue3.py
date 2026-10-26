@@ -1,0 +1,13 @@
+from sim import Sim
+from lmp import oku
+import itertools,json
+base=[(f,s,a//256,b) for f,s,a,b in oku('work/gearedblue3.lmp')[1]][:947];best=0
+for route,delay,avoid,lock,fire in itertools.product([1],[0,1,3,5,8,12,20],[False,True],[False,True],[True,False]):
+ r=Sim(3);r.replay(base);r.step(n=delay);r.smartturn=True;r.auto_doors=True;r.weapon_policy=True;r.avoid=avoid;r.combat_lock=lock
+ pts=[(-1400,-800),(-1380,-840),(-1216,-890),(-992,-890),(-792,-832)] if route==0 else [(-1216,-664),(-840,-664),(-800,-704),(-688,-704),(-576,-672),(-496,-672)]
+ for p in pts+[(-416,-512),(-416,-432),(-384,-416),(-328,-416),(-168,-456),(-160,-488),(-160,-864)]:
+  if not r.goto(*p,fire=fire,rad=12,maxn=250):break
+ if r.state['keys'][0] and r.state['health']>best:
+  best=r.state['health'];r.save('work/searchblue3.lmp');json.dump({'route':route,'delay':delay,'avoid':avoid,'lock':lock,'fire':fire,'health':best,'tics':len(r.t)},open('work/searchblue3.json','w'));print('BEST',best,flush=True)
+ r.close()
+ if best>=40:break

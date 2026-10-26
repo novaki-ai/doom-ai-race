@@ -1,0 +1,161 @@
+import os,subprocess,struct,json,math
+from wad import Wad
+os.sched_setaffinity(0,{4,5,6,7})
+ROOT=os.path.dirname(os.path.abspath(__file__))
+class Sim:
+ def __init__(self,m):
+  self.m=m;self.wad=Wad(m);self.lastattack=-100;self.near=False;self.combat_lock=False;self.hitscan_priority=False;self.combat_range=500;self.weapon_policy=False;self.target_id=None;self.smartturn=False;self.turn_sign=0;self.reversals=[];self.lastuse=-100;self.auto_doors=False;self.auto_dist=66;self.avoid=False;self.nav=None;self.door_used={};self.t=[];self.trace=[];self.state={};self.prefix=ROOT+f'/work/sim{os.getpid()}'
+  for ext in ['in','out']:
+   p=self.prefix+'.'+ext
+   if os.path.exists(p):os.unlink(p)
+   os.mkfifo(p)
+  open(self.prefix+'.lmp','wb').write(bytes([109,3,1,m,0,0,0,0,0,1,0,0,0])+bytes(400000)+b'\x80')
+  env=os.environ.copy();env.update(RACE_IN=self.prefix+'.in',RACE_OUT=self.prefix+'.out',SDL_VIDEODRIVER='dummy',SDL_AUDIODRIVER='dummy',LD_LIBRARY_PATH=ROOT+'/deps/root/usr/lib/x86_64-linux-gnu:/opt/dsda-doom/usr/lib/x86_64-linux-gnu')
+  self.log=open(self.prefix+'.log','w')
+  self.p=subprocess.Popen([ROOT+'/build/dsda-doom','-iwad',ROOT+'/game/DOOM1.WAD','-complevel','2','-fastdemo',self.prefix+'.lmp','-nodraw','-nosound','-nomusic','-data',ROOT+'/work'],cwd=ROOT+'/work',env=env,stdout=self.log,stderr=self.log)
+  self.out=open(self.prefix+'.out');self.inp=open(self.prefix+'.in','w',buffering=1);self.read()
+ def read(self):
+  s=self.out.readline()
+  if not s:
+   log=open(self.prefix+'.log').read()
+   if 'FINISHED:' in log:
+    self.state['state']=1;return self.state
+   raise RuntimeError('sim ended: '+log[-500:])
+  self.state=json.loads(s);self.trace.append((self.state['x'],self.state['y']));return self.state
+ def step(self,f=0,s=0,a=0,b=0,n=1):
+  for _ in range(n):
+   if self.state.get('state',0)!=0 or self.state.get('health',100)<=0:break
+   sign=(a>0)-(a<0)
+   if sign and self.turn_sign and sign!=self.turn_sign:self.reversals.append(len(self.t))
+   if sign:self.turn_sign=sign
+   if b&1 and (not self.t or not self.t[-1][3]&1):self.lastattack=len(self.t)
+   if b&2 and (not self.t or not self.t[-1][3]&2):self.lastuse=len(self.t)
+   self.inp.write(f'{f} {s} {a} {b}\n');self.t.append((f,s,a,b));self.read()
+  return self.state
+ def close(self):
+  self.p.kill();self.p.wait();self.inp.close();self.out.close()
+ def save(self,path):
+  open(path,'wb').write(bytes([109,3,1,self.m,0,0,0,0,0,1,0,0,0])+b''.join(struct.pack('bbBB',f,s,a%256,b) for f,s,a,b in self.t)+b'\x80')
+ def draw(self):self.wad.draw(f'work/trace{self.m}.png',self.trace,False)
+ def replay(self,t):
+  for f,s,a,b in t:self.step(f,s,a,b)
+ def goto(self,x,y,rad=20,maxn=350,fire=False,use=True,face=None,speed=22,stucklimit=75,shoot_at=None,brake=.3):
+  start=len(self.t);stuck=0;teleported=False
+  for k in range(maxn):
+   st=self.state;px,py=st['x'],st['y'];dx,dy=x-px,y-py;dist=math.hypot(dx,dy)
+   if dist<rad or st['state']!=0:break
+   if st['health']<=0:break
+   if self.avoid and dist>40:
+    if self.nav is None:
+     from nav import Nav
+     self.nav=Nav(self.wad,8,18)
+    ux,uy=dx/dist,dy/dist
+    ob=[]
+    for o in st['monsters']:
+     if not(o[5]&2) or (o[5]&4 and o[4]<=0):continue
+     ox,oy=o[1]-px,o[2]-py;along=ox*ux+oy*uy;lat=ox*(-uy)+oy*ux
+     rr=46 if o[0] in [12,13,15,18] else (30 if o[0]==30 else 38)
+     if 0<along<130 and abs(lat)<rr+8:ob.append((along,o,rr))
+    if ob:
+     _,o,rr=min(ob,key=lambda v:v[0]);opts=[]
+     for sign in [-1,1]:
+      cx=o[1]+(-uy)*sign*(rr+14);cy=o[2]+ux*sign*(rr+14)
+      gx,gy=map(round,self.nav.grid((cx,cy)))
+      if not(0<=gx<self.nav.nx and 0<=gy<self.nav.ny) or self.nav.pix[gx,gy]:continue
+      fl,ce=st['sectors'][self.nav.sector(cx,cy)]
+      if abs(fl-st['z'])>24 or ce-fl<56:continue
+      opts.append((math.hypot(cx-px,cy-py)+math.hypot(cx-x,cy-y),cx,cy))
+     if opts:
+      _,cx,cy=min(opts);dx,dy=cx-px,cy-py;dist=math.hypot(dx,dy)
+   desired=math.atan2(dy,dx)+math.pi/4 if face is None else math.radians(face)
+   target=None
+   if fire:
+    enemies=[o for o in st['monsters'] if o[5]&4 and o[4]>0 and o[0]!=30 and math.hypot(o[1]-px,o[2]-py)<self.combat_range and (self.visible(o) or (self.near and math.hypot(o[1]-px,o[2]-py)<110))]
+    if enemies:
+     if self.combat_lock:
+      target=next((o for o in enemies if len(o)>9 and o[9]==self.target_id),None)
+      if target is None:
+       target=min(enemies,key=lambda o:math.hypot(o[1]-px,o[2]-py)*((.12 if o[0]==2 else .3 if o[0]==1 else 1) if self.hitscan_priority else (.5 if o[0]==2 else .75 if o[0]==1 else 1)))
+       self.target_id=target[9] if len(target)>9 else None
+     else:
+      target=min(enemies,key=lambda o:math.hypot(o[1]-px,o[2]-py)*(0.25 if self.near and ((o[1]-px)*dx+(o[2]-py)*dy)>math.hypot(o[1]-px,o[2]-py)*dist*.75 and math.hypot(o[1]-px,o[2]-py)<120 else 1))
+     desired=math.atan2(target[2]-py,target[1]-px)
+   if shoot_at is not None:
+    desired=math.atan2(shoot_at[1]-py,shoot_at[0]-px);target=True
+   door=None
+   if use and self.auto_doors:
+    choices=[]
+    for a,b,fl,sp,tag,rs,ls in self.wad.l:
+     if sp not in [1,26,27,28,31,32,33,34,62,117,118]:continue
+     ax0,ay0=self.wad.v[a];bx0,by0=self.wad.v[b];ex,ey=bx0-ax0,by0-ay0
+     u=max(0,min(1,((px-ax0)*ex+(py-ay0)*ey)/(ex*ex+ey*ey)));qx,qy=ax0+u*ex,ay0+u*ey
+     dd=math.hypot(qx-px,qy-py)
+     if dd>self.auto_dist:continue
+     if (x-px)*(qx-px)+(y-py)*(qy-py)<0:continue
+     sec=self.wad.s[ls][-1] if ls!=65535 else -1
+     if sp!=62 and st['sectors'][sec][1]-st['sectors'][sec][0]>=56:continue
+     key=sec if sp!=62 else 10000+tag
+     if len(self.t)-self.door_used.get(key,-1000)<140:continue
+     choices.append((dd,math.atan2(qy-py,qx-px),key))
+    if choices:
+     _,desired,door=min(choices);target=None
+   turn=round(((desired-st['angle']/2**32*math.tau+math.pi)%math.tau-math.pi)/math.tau*256)
+   turn=self.limit_turn(turn)
+   ang=st['angle']/2**32*math.tau+turn/256*math.tau
+   v=min(speed,dist*brake);ax=dx/dist*v-st['vx'];ay=dy/dist*v-st['vy']
+   f=max(-50,min(50,round(32*(ax*math.cos(ang)+ay*math.sin(ang)))))
+   s=max(-50,min(50,round(32*(ax*math.sin(ang)-ay*math.cos(ang)))))
+   attack=target is not None and abs((desired-ang+math.pi)%math.tau-math.pi)<.15
+   if attack and (not self.t or not self.t[-1][3]&1):
+    if len(self.t)-self.lastattack<7:attack=False
+    else:self.lastattack=len(self.t)
+   usepress=use and len(self.t)%70==0 and not self.auto_doors
+   if door is not None and abs((desired-ang+math.pi)%math.tau-math.pi)<.15:
+    usepress=True;self.door_used[door]=len(self.t)
+   b=(1 if attack else 0)|(2 if usepress and len(self.t)-self.lastuse>=7 else 0)
+   if self.weapon_policy:
+    chosen=2 if st['owned'][2] and st['ammo'][1]>0 else 3 if st['owned'][3] and st['ammo'][0]>0 else 1
+    if st['weapon']!=chosen:b=(b&~1)|4|(chosen<<3)
+   elif fire and st['owned'][2] and st['ammo'][1]>0 and st['weapon']==1:b|=20
+   self.step(f,s,turn,b)
+   if math.hypot(self.state['x']-px,self.state['y']-py)>128:teleported=True;break
+   if math.hypot(self.state['x']-px,self.state['y']-py)<.1:stuck+=1
+   else:stuck=0
+   if stuck>stucklimit:break
+  dist=math.hypot(x-self.state['x'],y-self.state['y'])
+  print('goto',x,y,'tic',len(self.t),'pos',tuple(round(self.state[v],1) for v in ['x','y']),'dist',round(dist),'hp',self.state['health'],'sector',self.state['sector'],flush=True)
+  return dist<rad or self.state['state']!=0 or teleported
+ def limit_turn(self,a):
+  a=max(-46,min(46,a))
+  if not self.smartturn:return a if len(self.t)%7==0 else 0
+  sign=(a>0)-(a<0)
+  if sign and self.turn_sign and sign!=self.turn_sign and sum(len(self.t)-t<35 for t in self.reversals)>=6:return 0
+  return a
+ def visible(self,o):
+  if len(o)>8:return bool(o[8])
+  st=self.state;x,y=st['x'],st['y'];tx,ty=o[1:3]
+  for a,b,fl,sp,tag,r,l in self.wad.l:
+   ax,ay=self.wad.v[a];bx,by=self.wad.v[b]
+   if max(ax,bx)<min(x,tx) or min(ax,bx)>max(x,tx) or max(ay,by)<min(y,ty) or min(ay,by)>max(y,ty):continue
+   den=(tx-x)*(by-ay)-(ty-y)*(bx-ax)
+   if abs(den)<1e-9:continue
+   t=((ax-x)*(by-ay)-(ay-y)*(bx-ax))/den
+   u=((ax-x)*(ty-y)-(ay-y)*(tx-x))/den
+   if 0<t<1 and 0<=u<=1:
+    if l==65535:return False
+    rs=st['sectors'][self.wad.s[r][-1]];ls=st['sectors'][self.wad.s[l][-1]]
+    z=st['z']+40+(o[3]+28-st['z']-40)*t
+    if z<max(rs[0],ls[0]) or z>min(rs[1],ls[1]):return False
+  return True
+ def face(self,deg,fire=False,use=False,n=10):
+  for k in range(n):
+   a=round(((math.radians(deg)-self.state['angle']/2**32*math.tau+math.pi)%math.tau-math.pi)/math.tau*256)
+   a=self.limit_turn(a)
+   ang=self.state['angle']/2**32*math.tau+a/256*math.tau
+   ax=-self.state['vx'];ay=-self.state['vy']
+   f=max(-50,min(50,round(32*(ax*math.cos(ang)+ay*math.sin(ang)))))
+   s=max(-50,min(50,round(32*(ax*math.sin(ang)-ay*math.cos(ang)))))
+   self.step(f=f,s=s,a=a,b=(1 if fire else 0)|(2 if use and len(self.t)%70==0 else 0))
+ def report(self):print({k:v for k,v in self.state.items() if k not in ['sectors','monsters']})
+if __name__=='__main__':
+ r=Sim(1);r.report();r.step(f=50,n=70);r.report();r.close()

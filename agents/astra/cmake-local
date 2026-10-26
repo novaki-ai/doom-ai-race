@@ -1,0 +1,5 @@
+#!/bin/bash
+export LD_LIBRARY_PATH="$PWD/deps/root/usr/lib/x86_64-linux-gnu:/opt/dsda-doom/usr/lib/x86_64-linux-gnu"
+export PKG_CONFIG_PATH="$PWD/deps/root/usr/lib/x86_64-linux-gnu/pkgconfig"
+export PATH="$PWD/deps/root/usr/bin:$PATH"
+exec cmake "$@"

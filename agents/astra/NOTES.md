@@ -1,0 +1,31 @@
+# Race log
+
+Start: 2026-10-25 22:29:57 UTC. Deadline: 00:29:57 UTC.
+
+All routes and inputs are constructed here from WAD geometry. No existing demos, TAS files, or external route descriptions are used. The installed engine, checker, and IWAD remain unchanged.
+
+Tools: `wad.py` extracts and draws map geometry. `run.py` writes vanilla tic commands and observes official-engine ghost exports. A separate source checkout of DSDA-Doom v0.29.4 is built locally as a simulator, with an observational IPC interface (position, health, monsters, sectors) and direct ticcmd input. Every submitted demo must independently pass the untouched official checker. Build parallelism is capped at four jobs.
+
+23:03 UTC: E1M1 18.03, E1M2 1:07.74, E1M4 31.69 and E1M8 3:58.66 have passed the official checker. The E1M8 baseline is deliberately conservative and contains long combat loops; improving it is a later priority. Observation now includes monster visibility and line-of-fire probes; these do not consume RNG or change world simulation. Every actual input remains a normal legal vanilla tic command. Searches vary route waypoints, short delays, targeting and obstacle avoidance. E1M3/E1M5 are in progress. All work remains single-agent.
+
+23:29 UTC progress: E1M5 (2:06.49) and E1M6 (2:55.09) now also pass. Six submitted maps total. E1M3 has the blue key and has returned through the blue door; E1M7 now has all three keys. Major navigation pitfalls found: barrels and decorations occupy space omitted from the map-wall raster; sector heights must include player radius near raised edges; newly triggered doors need opening time. Searches and the local simulator are now pinned to CPUs 4–7 so aggregate execution is capped at four cores. Added explicit aimed fire for individual blockers. The blue E1M7 key is collected by touching the edge of its raised platform.
+
+23:36 UTC: All eight maps now have independently verified demos. E1M3 1:32.97 and E1M7 2:48.40 complete the baseline set. Circling the lower arena during the E1M3 stair rise worked; stopping on the stairs exposed the player to too much fire. E1M7 required routing around a solid floor lamp in the final hall. Optimization now begins while retaining each passing baseline.
+
+23:42 UTC improvements: E1M1 13.63 and E1M4 26.29 pass. E1M8 improved to a much shorter fight by collecting the upper ammunition after clearing spectres, then circling around the baron platforms via the low southern steps. Static floor elevations explain many failed attempts: moving directly across the side of a 40/56-unit platform traps the player despite an apparently open overhead map.
+
+23:50 UTC: E1M1 improved further to 11.54; E1M2 58.31; E1M7 2:41.71. E1M6 now takes a shorter, healthier return from the yellow key. At the western alcove, explicitly shooting the blocking demon before entering was essential; trying to walk past it caused repeated deaths. All replacement submissions are checked before copying over the prior valid demo.
+
+23:55 UTC: E1M5 improved to 1:48.74. Derived an E1M8 jump directly from sector geometry: after the barons die, time a running approach as the star wall lowers, then jump to the raised left edge of the exit platform. This bypasses building and waiting for the exit stairs. Doom has no air steering, so the departure velocity must be set while still on the wall. The new demo passes independently.
+
+00:08 UTC update: Officially verified further improvements: E1M2 49.46 (pistol-only red-key route and sustained fire before the exit lift); E1M3 1:27.06 (trimmed the final health detour); E1M4 17.26 (northern route avoids the slow lift, followed by a carefully phased SR50 pit jump and a direct final-door approach); E1M8 1:44.26 (front-of-pod rectangle combat, then a timed jump onto the left exit platform while the boss wall lowers). All inputs remain human-limit compliant and vanilla-replayable. Current focus is making a shorter E1M7 return route survive.
+
+00:17 UTC: Added an official-replay-guided input reducer (`prune.py`). It removes short input spans whose net turn is zero, rejects human-limit violations, and retains a candidate only after the untouched checker reports PASS with a lower time. This improved E1M3 to 1:23.43, E1M6 to 2:36.63, E1M8 to 1:42.43, plus small E1M1/E1M4/E1M5 gains. A shorter E1M7 route reaches the final switch earlier but survival to the exit is still unresolved. No unverified experiment replaces a submitted demo.
+
+00:27 UTC: The E1M7 shortcut now completes: moving the inner-room stimpack pickup earlier preserved enough health, and the final route explicitly skirts the solid lamp and uses the accessible final medkit. The new route initially verified at 2:22.69, almost 19 seconds faster than the previous submission. E1M5's improved western return and closer targeting of blockers also produced a faster complete run. A second reducer restores the removed span's heading in the next legal input, then accepts changes only through the official replay checker.
+
+The final results and SHA-256 hashes are recorded in RESULTS.json. `promote.py` snapshots each candidate, checks it independently, and replaces a submission only when it passes and improves the official level time. Further small improvements may be promoted before the deadline.
+
+With more time I would improve navigation's clearance checks to account for the full player bounding box and moving floors, model lifts explicitly instead of generic use retries, and optimize combat around the actual shotgun reload state. E1M3/E1M6 routing and E1M8 combat remain the largest opportunities. Many failed attempts came from treating an overhead opening as walkable despite a height change, or from choosing a distant target while a nearby demon blocked the route. All submitted runs were generated here; no external demo or recorded route was consulted.
+
+Final submission, 00:29:19 UTC: all eight maps pass the untouched official checker. Total 11:02.10. The final per-map times are E1M1 0:11.29, E1M2 0:48.06, E1M3 1:23.09, E1M4 0:16.63, E1M5 1:42.37, E1M6 2:35.89, E1M7 2:22.40, E1M8 1:42.37. FINAL_CHECK.txt contains the final CLI verification output; RESULTS.json records hashes and times. All searches have finished.

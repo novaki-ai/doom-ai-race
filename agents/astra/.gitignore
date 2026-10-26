@@ -1,0 +1,7 @@
+game/DOOM1.WAD
+*.wad
+engine-src/
+build/
+deps/
+work/
+__pycache__/

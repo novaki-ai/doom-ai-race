@@ -1,0 +1,95 @@
+{
+  "checked_at_utc": "2026-10-26T00:29:18.765934+00:00",
+  "valid_maps": 8,
+  "total_seconds": 662.1,
+  "results": [
+    {
+      "demo": "submit/E1M1.lmp",
+      "pass": true,
+      "problems": [],
+      "map": "E1M1",
+      "tics": 395,
+      "time": "0:11.29",
+      "seconds": 11.29,
+      "category": "Pacifist",
+      "sha256": "56e799739e95b7814f59ff526a24ee54ef0641d844692eb65ec3128a8ee999f4"
+    },
+    {
+      "demo": "submit/E1M2.lmp",
+      "pass": true,
+      "problems": [],
+      "map": "E1M2",
+      "tics": 1682,
+      "time": "0:48.06",
+      "seconds": 48.06,
+      "category": "UV Speed",
+      "sha256": "655c193379a0594dba9c6ca95f4c2e1d0bc5da226a66289415758b548cd773d5"
+    },
+    {
+      "demo": "submit/E1M3.lmp",
+      "pass": true,
+      "problems": [],
+      "map": "E1M3",
+      "tics": 2908,
+      "time": "1:23.09",
+      "seconds": 83.09,
+      "category": "UV Speed",
+      "sha256": "c54ae53431ba5128a8503b10e43c1139cbbe9f18b75dcd9e951881e37b70937e"
+    },
+    {
+      "demo": "submit/E1M4.lmp",
+      "pass": true,
+      "problems": [],
+      "map": "E1M4",
+      "tics": 582,
+      "time": "0:16.63",
+      "seconds": 16.63,
+      "category": "UV Speed",
+      "sha256": "ef3d4d3e5b72f58126692091de20ad4874cae223bf99778dc41e16ee8cd8087b"
+    },
+    {
+      "demo": "submit/E1M5.lmp",
+      "pass": true,
+      "problems": [],
+      "map": "E1M5",
+      "tics": 3583,
+      "time": "1:42.37",
+      "seconds": 102.37,
+      "category": "UV Speed",
+      "sha256": "7f21638d12f37b81f4303e6f93099edcdb5b741438214c828461fce4abf8ec59"
+    },
+    {
+      "demo": "submit/E1M6.lmp",
+      "pass": true,
+      "problems": [],
+      "map": "E1M6",
+      "tics": 5456,
+      "time": "2:35.89",
+      "seconds": 155.89,
+      "category": "UV Speed",
+      "sha256": "aace68627fbd7c9d36bb3ad577284d15d6e1692118d601e1c4abc5bb86a6b3b7"
+    },
+    {
+      "demo": "submit/E1M7.lmp",
+      "pass": true,
+      "problems": [],
+      "map": "E1M7",
+      "tics": 4984,
+      "time": "2:22.40",
+      "seconds": 142.4,
+      "category": "UV Speed",
+      "sha256": "f55d012af3297baca8df4b55982a0030f251fdfaf292321297bcce8ffc37d9c9"
+    },
+    {
+      "demo": "submit/E1M8.lmp",
+      "pass": true,
+      "problems": [],
+      "map": "E1M8",
+      "tics": 3641,
+      "time": "1:42.37",
+      "seconds": 102.37,
+      "category": "UV Speed",
+      "sha256": "1cf38a22307c92975746e1f5b9a8e0a3242cd7bb42cc35ae80ef958fa0557374"
+    }
+  ]
+}
