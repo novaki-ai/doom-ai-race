@@ -1,18 +1,18 @@
 {
-  "checked_at_utc": "2026-10-26T00:27:27.645072+00:00",
+  "checked_at_utc": "2026-10-26T00:29:18.765934+00:00",
   "valid_maps": 8,
-  "total_seconds": 662.9,
+  "total_seconds": 662.1,
   "results": [
     {
       "demo": "submit/E1M1.lmp",
       "pass": true,
       "problems": [],
       "map": "E1M1",
-      "tics": 398,
-      "time": "0:11.37",
-      "seconds": 11.37,
+      "tics": 395,
+      "time": "0:11.29",
+      "seconds": 11.29,
       "category": "Pacifist",
-      "sha256": "7c4b87b921ea6b4b1b74e25aa81f8f23d59ebbc00a095baad66619579b016f17"
+      "sha256": "56e799739e95b7814f59ff526a24ee54ef0641d844692eb65ec3128a8ee999f4"
     },
     {
       "demo": "submit/E1M2.lmp",
@@ -41,22 +41,22 @@
       "pass": true,
       "problems": [],
       "map": "E1M4",
-      "tics": 598,
-      "time": "0:17.09",
-      "seconds": 17.09,
+      "tics": 582,
+      "time": "0:16.63",
+      "seconds": 16.63,
       "category": "UV Speed",
-      "sha256": "6eadccb2b06a8c0a16e081df049adeb464d7cf688dbe7545f803bd9d17f59bbd"
+      "sha256": "ef3d4d3e5b72f58126692091de20ad4874cae223bf99778dc41e16ee8cd8087b"
     },
     {
       "demo": "submit/E1M5.lmp",
       "pass": true,
       "problems": [],
       "map": "E1M5",
-      "tics": 3590,
-      "time": "1:42.57",
-      "seconds": 102.57,
+      "tics": 3583,
+      "time": "1:42.37",
+      "seconds": 102.37,
       "category": "UV Speed",
-      "sha256": "69112debe5254ba4283a575339a6b27eca932eaf20c45baff5072e538602d974"
+      "sha256": "7f21638d12f37b81f4303e6f93099edcdb5b741438214c828461fce4abf8ec59"
     },
     {
       "demo": "submit/E1M6.lmp",
@@ -74,11 +74,11 @@
       "pass": true,
       "problems": [],
       "map": "E1M7",
-      "tics": 4986,
-      "time": "2:22.46",
-      "seconds": 142.46,
+      "tics": 4984,
+      "time": "2:22.40",
+      "seconds": 142.4,
       "category": "UV Speed",
-      "sha256": "03adfb746bc5133ab7a6c4454fec7f4add93e884302d8e64602b246f2dce1cf6"
+      "sha256": "f55d012af3297baca8df4b55982a0030f251fdfaf292321297bcce8ffc37d9c9"
     },
     {
       "demo": "submit/E1M8.lmp",
