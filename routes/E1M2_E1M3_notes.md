@@ -25,6 +25,12 @@ about 30 tics waiting at each door (78, red door, 55), the 115-tic camp, and the
 With more time: kill the key-corridor zombies on entry with accurate taps, press doors from max range, and do a beam search instead of
 greedy segments (greedy is myopic: HP at the exit room decides survival). Shotgun/chaingun are not reachable cheaply.
 
+Later tries on the same prefix (routes/e1m2c_seg4.pkl, 796 tics) with CAMP 95-115, HOLD 20-50 and other seeds gave 31.09-35.5 s; none beat 30.80.
+Camps shorter than about 105 tics died in every try.
+
+At 02:51, on the coordinator's request, I stopped E1M2 work and gave my core to the E1M6 job
+(work/m67, TAG=h23_ SEED=7000, log work/m67/h23_e1m6.log).
+
 ## E1M3: no demo from me (the coordinator took E1M3 over)
 Analysis I handed over:
 - Normal exit (line 982) needs the blue key (-160,-864) for blue door 61, then walk-over stair line 967 (x=-256).

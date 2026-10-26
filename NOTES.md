@@ -46,9 +46,15 @@ health is 10 or less. The teleporter is beyond walls (tag 666) that lower only w
 dead. After that, a stair (build-8 at 0.25 units/tic) must rise for about 11 s. I found no shortcut in the map data.
 
 ## Maps (times are check.py results)
-- E1M1 10.09 s (me), E1M2 30.80 s (helper), E1M4 13.43 s (helper). Other maps: see below.
-- E1M1: start -> north corridor -> door -> north room -> zigzag room -> two doors south -> exit switch.
-  7-leg beam search with corner cutting: 14.37 s first, then 12.37, 11.91 and 10.09 s.
+- Submitted (check.py PASS): E1M1 10.06 s (me), E1M2 30.80 s (helper), E1M4 13.43 s (helper).
+- E1M2 route (helper): east door -> red key -> red door -> west stairs + 3 medikits -> lift 137 -> switch 777 ->
+  door 129 -> exit door 55; a 115-tic stand at the exit door shooting the room, lift 49, kill the imp in the
+  exit alcove, exit switch. 40.37 -> 30.80 s.
+- E1M4 route (helper): door 648 -> east room -> north rooms -> loop to lower the maze block (line 807) -> door 469
+  -> run-up east, then a full-speed strafe-run west that jumps the 192-unit gap (sector 52) from the stair top
+  to the ledge: skips both keys and switch 592 -> exit door 548 -> switch 554. 14.71 -> 13.43 s.
+- E1M1 (10.06 s): start -> north corridor -> door -> north room -> zigzag room -> two doors south -> exit switch.
+  7-leg beam search with corner cutting: 14.37 s first, then 12.37, 11.91, 10.09 and 10.06 s.
 - E1M7 (not submitted): needs the yellow key (east lift, an imp in a 64-unit corridor, 3 shotgun guys at the key),
   then the west lift for the red key, then the red door for the blue key, then the yellow and blue doors: about
   21,600 units in total. My follower always died at the yellow key, even after picking up the green armour first.
@@ -58,8 +64,19 @@ dead. After that, a stair (build-8 at 0.25 units/tic) must rise for about 11 s. 
   with about 20 monsters. My 28-leg beam search reached the trigger at tic ~1315 but always died while waiting.
   The helper then tried the secret exit (line 785, also an exit for check.py) via lift 165 -> switch 360 -> pit 66
   -> corridor 51 -> room 32 -> ring 31 -> room 35.
-- E1M5 (helper): blue key behind switch 189 in the west pit (needs the yellow key first); the yellow-key leg
-  (raised nukage sector 91, spectres) was the blocker.
+- E1M5 (helper): blue key behind switch 189 in the west pit (needs the yellow key first). The yellow key was
+  reached at tic 717, the yellow door at tic ~937, then the player died behind it. Not finished.
+- E1M6 (helper, plus 3 parallel searches at the end): red key -> red door -> blue key -> blue door -> far-east
+  switch L438 -> yellow key -> yellow door -> north switch L822 -> west wing switch L599 -> exit L627. The route
+  reaches L822 at about tic 2300, but with ~16 hits taken, and the final leg into the west wing (about 30 ambush
+  monsters and 7 spectres) kept killing the player.
+- E1M8: not attempted beyond analysis (see above).
+
+## Organisation
+I built the tools and E1M1, then ran three helper agents (one core each, same tools, own copies under
+tools_m23/, tools_m45/, tools_m67/) on E1M2+E1M3, E1M4+E1M5 and E1M6+E1M7, and took over E1M7 and later E1M3
+myself. Bug fixes and new features in tools/ were sent to the helpers as they were found. Their own notes:
+routes/E1M2_E1M3_notes.md, routes/E1M4_E1M5_notes.md, routes/E1M6_E1M7_notes.md (where written).
 
 ## With more time
 - Make the follower monster-aware (read monster positions, for example from savegame-format key frames) to dodge,
